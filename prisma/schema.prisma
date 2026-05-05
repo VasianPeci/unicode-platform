@@ -1,0 +1,206 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  TEACHER
+  STUDENT
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum SubmissionStatus {
+  PENDING
+  ACCEPTED
+  WRONG_ANSWER
+  TIME_LIMIT_EXCEEDED
+  MEMORY_LIMIT_EXCEEDED
+  RUNTIME_ERROR
+  COMPILATION_ERROR
+}
+
+enum ContestStatus {
+  UPCOMING
+  ACTIVE
+  ENDED
+}
+
+model University {
+  id         String   @id @default(uuid())
+  name       String
+  domain     String   @unique
+  logoUrl    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  users      User[]
+
+  @@map("universities")
+}
+
+model User {
+  id            String     @id @default(uuid())
+  email         String     @unique
+  name          String
+  passwordHash  String
+  role          Role       @default(STUDENT)
+  totalPoints   Int        @default(0)
+  avatarUrl     String?
+  isActive      Boolean    @default(true)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  universityId  String
+  university    University @relation(fields: [universityId], references: [id])
+
+  submissions         Submission[]
+  createdProblems     Problem[]           @relation("ProblemAuthor")
+  createdContests     Contest[]           @relation("ContestCreator")
+  contestParticipants ContestParticipant[]
+
+  @@index([universityId])
+  @@index([totalPoints])
+  @@map("users")
+}
+
+model Problem {
+  id           String     @id @default(uuid())
+  title        String
+  slug         String     @unique
+  description  String     @db.Text
+  difficulty   Difficulty
+  points       Int        @default(0)
+  timeLimit    Int        @default(2000)   // ms
+  memoryLimit  Int        @default(256)    // MB
+  isPublished  Boolean    @default(false)
+  testCases    Json       // array of {input, expectedOutput, isHidden}
+  starterCode  Json       // {javascript, python, java, cpp}
+  constraints  String?    @db.Text
+  examples     Json?      // array of {input, output, explanation}
+  hints        Json?      // array of strings
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  createdById  String
+  createdBy    User       @relation("ProblemAuthor", fields: [createdById], references: [id])
+
+  tags             ProblemTag[]
+  submissions      Submission[]
+  contestProblems  ContestProblem[]
+
+  @@index([difficulty])
+  @@index([createdById])
+  @@map("problems")
+}
+
+model Tag {
+  id       String  @id @default(uuid())
+  name     String  @unique
+  category String  // e.g. "Data Structure", "Algorithm", "Topic"
+  color    String  @default("#6366f1")
+
+  problems ProblemTag[]
+
+  @@map("tags")
+}
+
+model ProblemTag {
+  problemId String
+  tagId     String
+
+  problem   Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([problemId, tagId])
+  @@map("problem_tags")
+}
+
+model Submission {
+  id          String           @id @default(uuid())
+  code        String           @db.Text
+  language    String
+  status      SubmissionStatus @default(PENDING)
+  runtimeMs   Int?
+  memoryKb    Int?
+  testResults Json?            // array of {passed, input, output, expected, time}
+  errorMsg    String?          @db.Text
+  pointsAwarded Int           @default(0)
+  submittedAt DateTime         @default(now())
+
+  userId      String
+  user        User    @relation(fields: [userId], references: [id])
+
+  problemId   String
+  problem     Problem @relation(fields: [problemId], references: [id])
+
+  contestId   String?
+  contest     Contest? @relation(fields: [contestId], references: [id])
+
+  @@index([userId])
+  @@index([problemId])
+  @@index([status])
+  @@index([submittedAt])
+  @@map("submissions")
+}
+
+model Contest {
+  id          String        @id @default(uuid())
+  title       String
+  description String?       @db.Text
+  startsAt    DateTime
+  endsAt      DateTime
+  isPublic    Boolean       @default(true)
+  rules       String?       @db.Text
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  createdById String
+  createdBy   User          @relation("ContestCreator", fields: [createdById], references: [id])
+
+  problems     ContestProblem[]
+  participants ContestParticipant[]
+  submissions  Submission[]
+
+  @@index([startsAt])
+  @@index([endsAt])
+  @@map("contests")
+}
+
+model ContestProblem {
+  contestId   String
+  problemId   String
+  orderIndex  Int      @default(0)
+  pointOverride Int?   // override default problem points for this contest
+
+  contest     Contest  @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  problem     Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@id([contestId, problemId])
+  @@map("contest_problems")
+}
+
+model ContestParticipant {
+  contestId  String
+  userId     String
+  score      Int      @default(0)
+  rank       Int?
+  joinedAt   DateTime @default(now())
+
+  contest    Contest  @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([contestId, userId])
+  @@map("contest_participants")
+}
