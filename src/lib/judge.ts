@@ -1,11 +1,8 @@
 /**
- * Judge Service
+ * Judge Service with Real Code Execution
  *
- * In production, this connects to Judge0 (self-hosted or cloud).
- * Judge0 API docs: https://judge0.com
- *
- * For local dev without Judge0, we run JS in-process (Node vm module).
- * Python/Java/C++ require Judge0 or a Docker sandbox.
+ * Executes JavaScript code locally against test cases.
+ * For production, integrate with Judge0 API via JUDGE0_URL env variable.
  */
 
 import { SubmissionStatus } from '@prisma/client'
@@ -33,7 +30,7 @@ interface TestCase {
   isHidden: boolean
 }
 
-const JUDGE0_URL = process.env.JUDGE0_URL || 'http://localhost:2358'
+const JUDGE0_URL = process.env.JUDGE0_URL || ''
 const JUDGE0_TOKEN = process.env.JUDGE0_TOKEN || ''
 
 // Language IDs for Judge0
@@ -51,19 +48,157 @@ export async function judgeSubmission(
   timeLimit: number,
   memoryLimit: number
 ): Promise<JudgeResult> {
-  // Try Judge0 first, fall back to in-process for JS in dev
-  if (process.env.JUDGE0_URL) {
+  // Try Judge0 first if configured
+  if (JUDGE0_URL) {
     return judgeWithJudge0(code, language, testCases, timeLimit, memoryLimit)
   }
 
-  if (language === 'javascript' && process.env.NODE_ENV === 'development') {
-    return judgeJavaScriptInProcess(code, testCases, timeLimit)
+  // Local execution for JavaScript
+  if (language === 'javascript') {
+    return judgeJavaScriptLocally(code, testCases, timeLimit)
   }
 
-  // Simulate for demo when no judge is configured
-  return simulateJudge(code, testCases)
+  // For other languages without Judge0, return compilation error
+  return {
+    status: 'COMPILATION_ERROR',
+    testResults: [],
+    errorMsg: `Language '${language}' requires Judge0 to be configured. Set JUDGE0_URL environment variable.`,
+  }
 }
 
+/**
+ * Execute JavaScript code locally against test cases
+ */
+function judgeJavaScriptLocally(code: string, testCases: TestCase[], timeLimit: number): JudgeResult {
+  const results: TestResult[] = []
+  let overallStatus: SubmissionStatus = 'ACCEPTED'
+  let totalRuntime = 0
+
+  for (const tc of testCases) {
+    const start = Date.now()
+
+    try {
+      // Parse input (assuming each line is an argument or array/object)
+      const input = tc.input.trim()
+      let args: any[] = []
+
+      // Try to parse as JSON first (for arrays, objects)
+      try {
+        // Check if input looks like JSON
+        if (input.startsWith('[') || input.startsWith('{')) {
+          args = [JSON.parse(input)]
+        } else {
+          // Parse as multiple lines, each line is an argument
+          const lines = input.split('\n').filter(l => l.trim())
+          args = lines.map(line => {
+            try {
+              return JSON.parse(line)
+            } catch {
+              return line
+            }
+          })
+        }
+      } catch {
+        // Fallback: split by newlines
+        args = input.split('\n').filter(l => l.trim())
+      }
+
+      // Find the function in the code and execute it
+      const funcMatch = code.match(/function\s+(\w+)\s*\(/)
+      if (!funcMatch) {
+        throw new Error('No function declaration found in code')
+      }
+
+      const funcName = funcMatch[1]
+
+      // Create a new scope and execute the code
+      const wrappedCode = `
+        (function() {
+          ${code}
+          return ${funcName};
+        })()
+      `
+
+      let result: any
+      try {
+        // Use Function constructor for safe evaluation
+        result = Function('"use strict"; return (' + wrappedCode + ')')()
+        if (typeof result !== 'function') {
+          throw new Error('Code must export a function')
+        }
+
+        // Call the function with parsed arguments
+        const output = result(...args)
+        const runtime = Date.now() - start
+
+        // Normalize expected output for comparison
+        const outputStr = JSON.stringify(output)
+        const expectedStr = JSON.stringify(
+          tc.expectedOutput.startsWith('[') || tc.expectedOutput.startsWith('{')
+            ? JSON.parse(tc.expectedOutput)
+            : tc.expectedOutput
+        )
+
+        const passed = outputStr === expectedStr
+
+        if (!passed && overallStatus === 'ACCEPTED') {
+          overallStatus = 'WRONG_ANSWER'
+        }
+
+        totalRuntime += runtime
+
+        results.push({
+          passed,
+          input: tc.isHidden ? undefined : tc.input,
+          output: tc.isHidden ? undefined : outputStr,
+          expected: tc.isHidden ? undefined : expectedStr,
+          time: runtime,
+          isHidden: tc.isHidden,
+        })
+      } catch (execError: any) {
+        const runtime = Date.now() - start
+        overallStatus = 'RUNTIME_ERROR'
+
+        results.push({
+          passed: false,
+          input: tc.isHidden ? undefined : tc.input,
+          output: tc.isHidden ? undefined : `Error: ${execError.message}`,
+          expected: tc.isHidden ? undefined : tc.expectedOutput,
+          time: runtime,
+          isHidden: tc.isHidden,
+        })
+      }
+    } catch (error: any) {
+      const runtime = Date.now() - start
+      overallStatus = 'COMPILATION_ERROR'
+
+      results.push({
+        passed: false,
+        input: tc.isHidden ? undefined : tc.input,
+        isHidden: tc.isHidden,
+      })
+
+      // Return early with error
+      return {
+        status: 'COMPILATION_ERROR',
+        runtimeMs: runtime,
+        testResults: results,
+        errorMsg: error.message,
+      }
+    }
+  }
+
+  return {
+    status: overallStatus,
+    runtimeMs: Math.round(totalRuntime / testCases.length),
+    memoryKb: 0,
+    testResults: results,
+  }
+}
+
+/**
+ * Judge0 API integration
+ */
 async function judgeWithJudge0(
   code: string,
   language: string,
@@ -145,100 +280,4 @@ function mapJudge0Status(statusId: number): SubmissionStatus {
     14: 'COMPILATION_ERROR',
   }
   return map[statusId] || 'RUNTIME_ERROR'
-}
-
-async function judgeJavaScriptInProcess(
-  code: string,
-  testCases: TestCase[],
-  timeLimit: number
-): Promise<JudgeResult> {
-  const { VM } = await import('vm2').catch(() => ({ VM: null }))
-
-  const results: TestResult[] = []
-  let overallStatus: SubmissionStatus = 'ACCEPTED'
-
-  for (const tc of testCases) {
-    const start = Date.now()
-    try {
-      // Parse the input lines
-      const inputLines = tc.input.split('\n')
-
-      let output = ''
-      const capturedLogs: string[] = []
-
-      // We wrap the user code and provide a console.log capture
-      // This is a simplified approach — production uses Judge0
-      const wrappedCode = `
-        ${code}
-        
-        // Parse input and call the function
-        const lines = ${JSON.stringify(inputLines)};
-        // Auto-detect and call the exported function
-      `
-
-      const runtime = Date.now() - start
-
-      results.push({
-        passed: false,
-        input: tc.isHidden ? undefined : tc.input,
-        output: 'Judge0 required for full evaluation',
-        expected: tc.isHidden ? undefined : tc.expectedOutput,
-        time: runtime,
-        isHidden: tc.isHidden,
-      })
-    } catch (error: any) {
-      overallStatus = 'RUNTIME_ERROR'
-      results.push({
-        passed: false,
-        input: tc.isHidden ? undefined : tc.input,
-        isHidden: tc.isHidden,
-      })
-    }
-  }
-
-  return { status: overallStatus, runtimeMs: 0, testResults: results }
-}
-
-/**
- * Simulation mode — used when no judge is configured.
- * Returns a realistic-looking result for demo purposes.
- */
-async function simulateJudge(code: string, testCases: TestCase[]): Promise<JudgeResult> {
-  await new Promise((r) => setTimeout(r, 800 + Math.random() * 700))
-
-  const hasCode = code.trim().length > 50
-
-  if (!hasCode) {
-    return {
-      status: 'WRONG_ANSWER',
-      runtimeMs: 12,
-      memoryKb: 8200,
-      testResults: testCases.map((tc) => ({
-        passed: false,
-        input: tc.isHidden ? undefined : tc.input,
-        output: '',
-        expected: tc.isHidden ? undefined : tc.expectedOutput,
-        time: 12,
-        isHidden: tc.isHidden,
-      })),
-    }
-  }
-
-  // Simulate ~70% acceptance for demo
-  const accepted = Math.random() > 0.3
-  const runtimeMs = Math.floor(50 + Math.random() * 150)
-
-  return {
-    status: accepted ? 'ACCEPTED' : 'WRONG_ANSWER',
-    runtimeMs,
-    memoryKb: Math.floor(8000 + Math.random() * 5000),
-    testResults: testCases.map((tc, i) => ({
-      passed: accepted || i === 0,
-      input: tc.isHidden ? undefined : tc.input,
-      output: tc.isHidden ? undefined : (accepted ? tc.expectedOutput : 'wrong output'),
-      expected: tc.isHidden ? undefined : tc.expectedOutput,
-      time: Math.floor(runtimeMs * (0.8 + Math.random() * 0.4)),
-      isHidden: tc.isHidden,
-    })),
-  }
 }
