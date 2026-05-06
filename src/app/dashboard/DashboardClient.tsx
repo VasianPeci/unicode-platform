@@ -11,15 +11,44 @@ import {
   Clock,
 } from 'lucide-react'
 
-import { DIFFICULTY_CONFIG, STATUS_CONFIG } from '@/types'
+import { DIFFICULTY_CONFIG, STATUS_CONFIG, Difficulty, SubmissionStatus } from '@/types'
 import { formatRelative } from '@/lib/utils'
 
+type Submission = {
+  id: string
+  status: SubmissionStatus
+  submittedAt: string
+  language: string
+  problem: { title: string; slug: string; difficulty: Difficulty }
+}
+
+type Contest = {
+  id: string
+  title: string
+  startsAt: string
+  endsAt: string
+}
+
+type ProblemStat = {
+  status: SubmissionStatus
+  _count: number
+}
+
 type Props = {
-  session: any
-  recentSubmissions: any[]
-  problemStats: any[]
+  session: {
+    user: {
+      id: string
+      name: string
+      email: string
+      role: string
+      totalPoints: number
+      universityName: string
+    }
+  }
+  recentSubmissions: Submission[]
+  problemStats: ProblemStat[]
   userRank: number
-  upcomingContest: any
+  upcomingContest: Contest | null
 }
 
 export default function DashboardClient({
@@ -134,15 +163,15 @@ export default function DashboardClient({
             <div className="space-y-2">
               {recentSubmissions.map((sub) => {
                 const diff =
-                  DIFFICULTY_CONFIG[sub.problem.difficulty]
-                const status = STATUS_CONFIG[sub.status]
+                  DIFFICULTY_CONFIG[sub.problem.difficulty as Difficulty]
+                const status = STATUS_CONFIG[sub.status as SubmissionStatus]
 
                 return (
                   <Link
                     key={sub.id}
                     href={`/problems/${sub.problem.slug}`}
                     className="flex items-center gap-4 p-3 rounded-xl transition-all"
-                    style={{ background: 'var(--bg-elevated)' }}
+                    style={{ background: 'var(--bg-elevated)', textDecoration: 'none' }}
                   >
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">
@@ -157,7 +186,7 @@ export default function DashboardClient({
                     </div>
 
                     <span
-                      className="text-xs px-2 py-0.5 rounded-md"
+                      className="text-xs px-2 py-0.5 rounded-md font-medium"
                       style={{
                         color: diff.color,
                         background: diff.bg,
@@ -167,7 +196,7 @@ export default function DashboardClient({
                     </span>
 
                     <span
-                      className="text-xs"
+                      className="text-xs font-medium"
                       style={{ color: status.color }}
                     >
                       {status.label}
@@ -185,15 +214,38 @@ export default function DashboardClient({
             <h2 className="font-semibold mb-4">Quick start</h2>
 
             <div className="space-y-2">
-              <Link href="/problems?difficulty=EASY">
-                Easy problems →
+              <Link 
+                href="/problems?difficulty=EASY"
+                className="flex items-center justify-between p-3 rounded-xl transition-all"
+                style={{ background: 'var(--bg-elevated)', textDecoration: 'none' }}>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full" style={{ background: 'var(--success)' }} />
+                  <span className="text-sm">Easy problems</span>
+                </div>
+                <ArrowRight size={14} style={{ color: 'var(--text-muted)' }} />
               </Link>
 
-              <Link href="/problems?difficulty=MEDIUM">
-                Medium problems →
+              <Link 
+                href="/problems?difficulty=MEDIUM"
+                className="flex items-center justify-between p-3 rounded-xl transition-all"
+                style={{ background: 'var(--bg-elevated)', textDecoration: 'none' }}>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full" style={{ background: 'var(--warning)' }} />
+                  <span className="text-sm">Medium problems</span>
+                </div>
+                <ArrowRight size={14} style={{ color: 'var(--text-muted)' }} />
               </Link>
 
-              <Link href="/contests">Join contest →</Link>
+              <Link 
+                href="/contests"
+                className="flex items-center justify-between p-3 rounded-xl transition-all"
+                style={{ background: 'var(--bg-elevated)', textDecoration: 'none' }}>
+                <div className="flex items-center gap-2">
+                  <Trophy size={14} style={{ color: 'var(--accent)' }} />
+                  <span className="text-sm">Join a contest</span>
+                </div>
+                <ArrowRight size={14} style={{ color: 'var(--text-muted)' }} />
+              </Link>
             </div>
           </div>
 
@@ -206,17 +258,22 @@ export default function DashboardClient({
               }}
             >
               <div className="flex items-center gap-2 mb-3">
-                <Clock size={14} />
-                <span>UPCOMING CONTEST</span>
+                <Clock size={14} style={{ color: 'var(--accent)' }} />
+                <span className="text-xs font-medium" style={{ color: 'var(--accent)' }}>UPCOMING CONTEST</span>
               </div>
 
-              <p className="font-semibold">
-                {upcomingContest.title}
-              </p>
+              <p className="font-semibold mb-1">{upcomingContest.title}</p>
 
-              <p className="text-sm">
+              <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
                 {formatRelative(upcomingContest.startsAt)}
               </p>
+
+              <Link 
+                href="/contests"
+                className="block text-center py-2 rounded-lg text-sm font-medium transition-all"
+                style={{ background: 'var(--accent)', color: '#fff', textDecoration: 'none' }}>
+                View contest
+              </Link>
             </div>
           )}
         </div>
