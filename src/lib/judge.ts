@@ -1,10 +1,5 @@
-/**
- * Judge Service with Real Code Execution
- *
- * Executes JavaScript code locally against test cases.
- * For production, integrate with Judge0 API via JUDGE0_URL env variable.
- */
-
+import * as vm from 'node:vm'
+import { isDeepStrictEqual } from 'node:util'
 import { SubmissionStatus } from '@prisma/client'
 
 export interface JudgeResult {
@@ -33,12 +28,225 @@ interface TestCase {
 const JUDGE0_URL = process.env.JUDGE0_URL || ''
 const JUDGE0_TOKEN = process.env.JUDGE0_TOKEN || ''
 
-// Language IDs for Judge0
 const JUDGE0_LANGUAGE_IDS: Record<string, number> = {
-  javascript: 93, // Node.js 18
-  python: 92,     // Python 3.11
-  java: 62,       // Java 17
-  cpp: 54,        // C++ 17
+  javascript: 93,
+  python: 92,
+  java: 62,
+  cpp: 54,
+}
+
+const STATUS_ORDER: Record<SubmissionStatus, number> = {
+  PENDING: -1,
+  ACCEPTED: 0,
+  WRONG_ANSWER: 1,
+  TIME_LIMIT_EXCEEDED: 2,
+  MEMORY_LIMIT_EXCEEDED: 3,
+  RUNTIME_ERROR: 4,
+  COMPILATION_ERROR: 5,
+}
+
+function worseStatus(a: SubmissionStatus, b: SubmissionStatus): SubmissionStatus {
+  return STATUS_ORDER[b] > STATUS_ORDER[a] ? b : a
+}
+
+// Normalize values for comparison across VM boundaries
+function normalizeForComparison(value: any): any {
+  try {
+    return structuredClone(value)
+  } catch {
+    return JSON.parse(JSON.stringify(value))
+  }
+}
+
+function normalizeDisplayValue(value: unknown): string {
+  if (typeof value === 'string') return value
+  if (typeof value === 'bigint') return value.toString()
+  if (typeof value === 'number' && Number.isNaN(value)) return 'NaN'
+  if (value === undefined) return 'undefined'
+  return JSON.stringify(value)
+}
+
+function parseLiteral(text: string): any {
+  const t = text.trim()
+  if (!t) return ''
+
+  if (t === 'true') return true
+  if (t === 'false') return false
+  if (t === 'null') return null
+  if (t === 'undefined') return undefined
+  if (/^-?\d+(\.\d+)?$/.test(t)) return Number(t)
+
+  if ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith("'") && t.endsWith("'"))) {
+    try {
+      return JSON.parse(t.replace(/^'/, '"').replace(/'$/, '"'))
+    } catch {
+      return t.slice(1, -1)
+    }
+  }
+
+  if ((t.startsWith('[') && t.endsWith(']')) || (t.startsWith('{') && t.endsWith('}'))) {
+    return JSON.parse(t)
+  }
+
+  return t
+}
+
+function splitTopLevel(input: string): string[] {
+  const parts: string[] = []
+  let current = ''
+  let depth = 0
+  let stringQuote: '"' | "'" | '`' | null = null
+  let escape = false
+
+  for (const ch of input) {
+    if (escape) {
+      current += ch
+      escape = false
+      continue
+    }
+
+    if (ch === '\\') {
+      current += ch
+      escape = true
+      continue
+    }
+
+    if (stringQuote) {
+      current += ch
+      if (ch === stringQuote) stringQuote = null
+      continue
+    }
+
+    if (ch === '"' || ch === "'" || ch === '`') {
+      current += ch
+      stringQuote = ch
+      continue
+    }
+
+    if (ch === '[' || ch === '{' || ch === '(') depth++
+    if (ch === ']' || ch === '}' || ch === ')') depth--
+
+    if (ch === ',' && depth === 0) {
+      parts.push(current.trim())
+      current = ''
+      continue
+    }
+
+    current += ch
+  }
+
+  if (current.trim()) parts.push(current.trim())
+  return parts
+}
+
+function parseInput(input: string): any[] {
+  const trimmed = input.trim()
+  if (!trimmed) return []
+
+  if (trimmed.includes('=')) {
+    return splitTopLevel(trimmed).map((part) => {
+      const eqIndex = part.indexOf('=')
+      const rawValue = eqIndex >= 0 ? part.slice(eqIndex + 1).trim() : part.trim()
+      return parseLiteral(rawValue)
+    })
+  }
+
+  if ((trimmed.startsWith('[') && trimmed.endsWith(']')) ||
+      (trimmed.startsWith('{') && trimmed.endsWith('}'))) {
+    return [JSON.parse(trimmed)]
+  }
+
+  if (trimmed.includes('\n')) {
+    return trimmed.split('\n').filter(Boolean).map(parseLiteral)
+  }
+
+  return [parseLiteral(trimmed)]
+}
+
+function parseExpectedOutput(text: string): any {
+  const trimmed = text.trim()
+  if (!trimmed) return ''
+
+  if ((trimmed.startsWith('[') && trimmed.endsWith(']')) ||
+      (trimmed.startsWith('{') && trimmed.endsWith('}'))) {
+    return JSON.parse(trimmed)
+  }
+
+  if (trimmed === 'true') return true
+  if (trimmed === 'false') return false
+  if (trimmed === 'null') return null
+  if (trimmed === 'undefined') return undefined
+  if (/^-?\d+(\.\d+)?$/.test(trimmed)) return Number(trimmed)
+
+  return trimmed
+}
+
+function extractEntryName(code: string): string | null {
+  const patterns = [
+    /\bfunction\s+([A-Za-z_$][\w$]*)\s*\(/,
+    /\bconst\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?\(/,
+    /\blet\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?\(/,
+    /\bvar\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?\(/,
+    /\basync\s+function\s+([A-Za-z_$][\w$]*)\s*\(/,
+  ]
+
+  for (const re of patterns) {
+    const match = code.match(re)
+    if (match) return match[1]
+  }
+
+  return null
+}
+
+function createSandbox(): vm.Context {
+  const sandbox: any = {
+    console: { log: () => {} },
+    module: { exports: {} },
+    exports: {},
+    setTimeout,
+    clearTimeout,
+    Promise,
+    Math,
+    Array,
+    Object,
+    JSON,
+    Map,
+    Set,
+  }
+
+  sandbox.global = sandbox
+  sandbox.globalThis = sandbox
+
+  return vm.createContext(sandbox)
+}
+
+function loadUserFunction(code: string, timeLimitMs: number): any {
+  const entryName = extractEntryName(code)
+  const sandbox = createSandbox()
+
+  const script = new vm.Script(code)
+  script.runInContext(sandbox, { timeout: timeLimitMs })
+
+  let fn = (sandbox as any).__judgeFn
+
+  if (!fn && entryName) {
+    fn = (sandbox as any)[entryName]
+  }
+
+  if (typeof fn !== 'function') {
+    throw new Error('No callable function found')
+  }
+
+  return { fn, sandbox }
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeLimitMs: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error('timed out')), timeLimitMs)
+    ),
+  ])
 }
 
 export async function judgeSubmission(
@@ -48,157 +256,21 @@ export async function judgeSubmission(
   timeLimit: number,
   memoryLimit: number
 ): Promise<JudgeResult> {
-  // Try Judge0 first if configured
-  if (JUDGE0_URL) {
-    return judgeWithJudge0(code, language, testCases, timeLimit, memoryLimit)
-  }
-
-  // Local execution for JavaScript
   if (language === 'javascript') {
     return judgeJavaScriptLocally(code, testCases, timeLimit)
   }
 
-  // For other languages without Judge0, return compilation error
+  if (JUDGE0_URL) {
+    return judgeWithJudge0(code, language, testCases, timeLimit, memoryLimit)
+  }
+
   return {
     status: 'COMPILATION_ERROR',
     testResults: [],
-    errorMsg: `Language '${language}' requires Judge0 to be configured. Set JUDGE0_URL environment variable.`,
+    errorMsg: `Language '${language}' requires Judge0. Set JUDGE0_URL environment variable.`,
   }
 }
 
-/**
- * Execute JavaScript code locally against test cases
- */
-function judgeJavaScriptLocally(code: string, testCases: TestCase[], timeLimit: number): JudgeResult {
-  const results: TestResult[] = []
-  let overallStatus: SubmissionStatus = 'ACCEPTED'
-  let totalRuntime = 0
-
-  for (const tc of testCases) {
-    const start = Date.now()
-
-    try {
-      // Parse input (assuming each line is an argument or array/object)
-      const input = tc.input.trim()
-      let args: any[] = []
-
-      // Try to parse as JSON first (for arrays, objects)
-      try {
-        // Check if input looks like JSON
-        if (input.startsWith('[') || input.startsWith('{')) {
-          args = [JSON.parse(input)]
-        } else {
-          // Parse as multiple lines, each line is an argument
-          const lines = input.split('\n').filter(l => l.trim())
-          args = lines.map(line => {
-            try {
-              return JSON.parse(line)
-            } catch {
-              return line
-            }
-          })
-        }
-      } catch {
-        // Fallback: split by newlines
-        args = input.split('\n').filter(l => l.trim())
-      }
-
-      // Find the function in the code and execute it
-      const funcMatch = code.match(/function\s+(\w+)\s*\(/)
-      if (!funcMatch) {
-        throw new Error('No function declaration found in code')
-      }
-
-      const funcName = funcMatch[1]
-
-      // Create a new scope and execute the code
-      const wrappedCode = `
-        (function() {
-          ${code}
-          return ${funcName};
-        })()
-      `
-
-      let result: any
-      try {
-        // Use Function constructor for safe evaluation
-        result = Function('"use strict"; return (' + wrappedCode + ')')()
-        if (typeof result !== 'function') {
-          throw new Error('Code must export a function')
-        }
-
-        // Call the function with parsed arguments
-        const output = result(...args)
-        const runtime = Date.now() - start
-
-        // Normalize expected output for comparison
-        const outputStr = JSON.stringify(output)
-        const expectedStr = JSON.stringify(
-          tc.expectedOutput.startsWith('[') || tc.expectedOutput.startsWith('{')
-            ? JSON.parse(tc.expectedOutput)
-            : tc.expectedOutput
-        )
-
-        const passed = outputStr === expectedStr
-
-        if (!passed && overallStatus === 'ACCEPTED') {
-          overallStatus = 'WRONG_ANSWER'
-        }
-
-        totalRuntime += runtime
-
-        results.push({
-          passed,
-          input: tc.isHidden ? undefined : tc.input,
-          output: tc.isHidden ? undefined : outputStr,
-          expected: tc.isHidden ? undefined : expectedStr,
-          time: runtime,
-          isHidden: tc.isHidden,
-        })
-      } catch (execError: any) {
-        const runtime = Date.now() - start
-        overallStatus = 'RUNTIME_ERROR'
-
-        results.push({
-          passed: false,
-          input: tc.isHidden ? undefined : tc.input,
-          output: tc.isHidden ? undefined : `Error: ${execError.message}`,
-          expected: tc.isHidden ? undefined : tc.expectedOutput,
-          time: runtime,
-          isHidden: tc.isHidden,
-        })
-      }
-    } catch (error: any) {
-      const runtime = Date.now() - start
-      overallStatus = 'COMPILATION_ERROR'
-
-      results.push({
-        passed: false,
-        input: tc.isHidden ? undefined : tc.input,
-        isHidden: tc.isHidden,
-      })
-
-      // Return early with error
-      return {
-        status: 'COMPILATION_ERROR',
-        runtimeMs: runtime,
-        testResults: results,
-        errorMsg: error.message,
-      }
-    }
-  }
-
-  return {
-    status: overallStatus,
-    runtimeMs: Math.round(totalRuntime / testCases.length),
-    memoryKb: 0,
-    testResults: results,
-  }
-}
-
-/**
- * Judge0 API integration
- */
 async function judgeWithJudge0(
   code: string,
   language: string,
@@ -208,65 +280,78 @@ async function judgeWithJudge0(
 ): Promise<JudgeResult> {
   const languageId = JUDGE0_LANGUAGE_IDS[language]
   if (!languageId) {
-    return { status: 'COMPILATION_ERROR', testResults: [], errorMsg: `Language ${language} not supported` }
+    return {
+      status: 'COMPILATION_ERROR',
+      testResults: [],
+      errorMsg: `Language '${language}' not supported`,
+    }
   }
 
   const results: TestResult[] = []
   let overallStatus: SubmissionStatus = 'ACCEPTED'
-  let totalRuntime = 0
 
   for (const tc of testCases) {
     try {
-      const submission = await fetch(`${JUDGE0_URL}/submissions?base64_encoded=false&wait=true`, {
+      const stdin = tc.input.trim()
+      const expectedOutput = tc.expectedOutput.trim()
+
+      const response = await fetch(`${JUDGE0_URL}/submissions?base64_encoded=false&wait=true`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(JUDGE0_TOKEN && { 'X-Auth-Token': JUDGE0_TOKEN }),
+          'X-RapidAPI-Key': JUDGE0_TOKEN,
+          'X-RapidAPI-Host': 'judge0-ce.p.rapidapi.com',
         },
         body: JSON.stringify({
           source_code: code,
           language_id: languageId,
-          stdin: tc.input,
-          expected_output: tc.expectedOutput,
+          stdin,
+          expected_output: expectedOutput,
           cpu_time_limit: timeLimit / 1000,
-          memory_limit: memoryLimit * 1024,
+          memory_limit: memoryLimit,
         }),
       })
 
-      const result = await submission.json()
-      const passed = result.status?.id === 3 // 3 = Accepted
+      const result = await response.json()
+      const statusId = result.status?.id
+
+      // Status 3 = Accepted
+      const passed = statusId === 3
 
       if (!passed && overallStatus === 'ACCEPTED') {
-        overallStatus = mapJudge0Status(result.status?.id)
+        overallStatus = mapJudge0Status(statusId)
       }
-
-      const runtime = parseFloat(result.time || '0') * 1000
-      totalRuntime += runtime
 
       results.push({
         passed,
         input: tc.isHidden ? undefined : tc.input,
-        output: tc.isHidden ? undefined : result.stdout?.trim(),
-        expected: tc.isHidden ? undefined : tc.expectedOutput,
-        time: Math.round(runtime),
+        output: tc.isHidden ? undefined : (result.stdout?.trim() || result.compile_output || result.stderr || ''),
+        expected: tc.isHidden ? undefined : expectedOutput,
+        time: result.time ? Math.round(parseFloat(result.time) * 1000) : 0,
         isHidden: tc.isHidden,
       })
-    } catch (error) {
-      results.push({ passed: false, isHidden: tc.isHidden })
-      overallStatus = 'RUNTIME_ERROR'
+    } catch (err: any) {
+      overallStatus = worseStatus(overallStatus, 'RUNTIME_ERROR')
+      results.push({
+        passed: false,
+        input: tc.isHidden ? undefined : tc.input,
+        output: tc.isHidden ? undefined : err.message,
+        isHidden: tc.isHidden,
+      })
     }
   }
 
   return {
     status: overallStatus,
-    runtimeMs: Math.round(totalRuntime / testCases.length),
-    memoryKb: 0,
     testResults: results,
   }
 }
 
 function mapJudge0Status(statusId: number): SubmissionStatus {
   const map: Record<number, SubmissionStatus> = {
+    1: 'COMPILATION_ERROR',
+    2: 'RUNTIME_ERROR',
+    3: 'ACCEPTED',
     4: 'WRONG_ANSWER',
     5: 'TIME_LIMIT_EXCEEDED',
     6: 'COMPILATION_ERROR',
@@ -280,4 +365,64 @@ function mapJudge0Status(statusId: number): SubmissionStatus {
     14: 'COMPILATION_ERROR',
   }
   return map[statusId] || 'RUNTIME_ERROR'
+}
+
+async function judgeJavaScriptLocally(
+  code: string,
+  testCases: TestCase[],
+  timeLimit: number
+): Promise<JudgeResult> {
+  const results: TestResult[] = []
+  let overallStatus: SubmissionStatus = 'ACCEPTED'
+
+  try {
+    const { fn } = loadUserFunction(code, timeLimit)
+
+    for (const tc of testCases) {
+      const start = Date.now()
+      try {
+        const args = parseInput(tc.input)
+        const output = await withTimeout(Promise.resolve(fn(...args)), timeLimit)
+
+        const expected = parseExpectedOutput(tc.expectedOutput)
+
+        const passed = isDeepStrictEqual(
+          normalizeForComparison(output),
+          normalizeForComparison(expected)
+        )
+
+        if (!passed) overallStatus = worseStatus(overallStatus, 'WRONG_ANSWER')
+
+        results.push({
+          passed,
+          input: tc.isHidden ? undefined : tc.input,
+          output: tc.isHidden ? undefined : normalizeDisplayValue(output),
+          expected: tc.isHidden ? undefined : normalizeDisplayValue(expected),
+          time: Date.now() - start,
+          isHidden: tc.isHidden,
+        })
+      } catch (err: any) {
+        overallStatus = worseStatus(overallStatus, 'RUNTIME_ERROR')
+        results.push({
+          passed: false,
+          input: tc.isHidden ? undefined : tc.input,
+          output: tc.isHidden ? undefined : err.message,
+          time: Date.now() - start,
+          isHidden: tc.isHidden,
+        })
+      }
+    }
+  } catch (err: any) {
+    overallStatus = 'COMPILATION_ERROR'
+    return {
+      status: overallStatus,
+      testResults: results,
+      errorMsg: err.message,
+    }
+  }
+
+  return {
+    status: overallStatus,
+    testResults: results,
+  }
 }
