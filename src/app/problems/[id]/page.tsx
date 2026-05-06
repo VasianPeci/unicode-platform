@@ -65,7 +65,7 @@ export default function ProblemPage() {
     </div>
   )
 
-  const diff = DIFFICULTY_CONFIG[problem.difficulty]
+  const diff = DIFFICULTY_CONFIG[problem.difficulty as 'EASY' | 'MEDIUM' | 'HARD']
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -108,9 +108,10 @@ export default function ProblemPage() {
                 style={{
                   color: activeTab === tab ? 'var(--text-primary)' : 'var(--text-muted)',
                   borderBottom: activeTab === tab ? '2px solid var(--accent)' : '2px solid transparent',
-                  background: 'none', border: 'none',
-                  borderBottom: activeTab === tab ? '2px solid var(--accent)' : '2px solid transparent',
-                  cursor: 'pointer', padding: '0 0 8px 0',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '0 0 8px 0',
                 }}>
                 {tab}
               </button>
@@ -275,7 +276,7 @@ export default function ProblemPage() {
 }
 
 function SubmissionResultPanel({ result }: { result: SubmissionResult }) {
-  const status = STATUS_CONFIG[result.status]
+  const status = STATUS_CONFIG[result.status as keyof typeof STATUS_CONFIG]
   const accepted = result.status === 'ACCEPTED'
 
   return (

@@ -11,44 +11,28 @@ import {
   Clock,
 } from 'lucide-react'
 
-import { DIFFICULTY_CONFIG, STATUS_CONFIG, Difficulty, SubmissionStatus } from '@/types'
+import { DIFFICULTY_CONFIG, STATUS_CONFIG } from '@/types'
 import { formatRelative } from '@/lib/utils'
 
-type Submission = {
-  id: string
-  status: SubmissionStatus
-  submittedAt: string
-  language: string
-  problem: { title: string; slug: string; difficulty: Difficulty }
-}
-
-type Contest = {
-  id: string
-  title: string
-  startsAt: string
-  endsAt: string
-}
-
-type ProblemStat = {
-  status: SubmissionStatus
-  _count: number
-}
+type Difficulty = 'EASY' | 'MEDIUM' | 'HARD'
+type SubmissionStatus = 'ACCEPTED' | 'WRONG_ANSWER' | 'TIME_LIMIT_EXCEEDED' | 'MEMORY_LIMIT_EXCEEDED' | 'RUNTIME_ERROR' | 'COMPILATION_ERROR' | 'PENDING'
 
 type Props = {
-  session: {
-    user: {
-      id: string
-      name: string
-      email: string
-      role: string
-      totalPoints: number
-      universityName: string
+  session: any
+  recentSubmissions: Array<{
+    id: string
+    status: SubmissionStatus
+    submittedAt: string
+    language: string
+    problem: {
+      title: string
+      slug: string
+      difficulty: Difficulty
     }
-  }
-  recentSubmissions: Submission[]
-  problemStats: ProblemStat[]
+  }>
+  problemStats: any[]
   userRank: number
-  upcomingContest: Contest | null
+  upcomingContest: any
 }
 
 export default function DashboardClient({
@@ -162,9 +146,8 @@ export default function DashboardClient({
           ) : (
             <div className="space-y-2">
               {recentSubmissions.map((sub) => {
-                const diff =
-                  DIFFICULTY_CONFIG[sub.problem.difficulty as Difficulty]
-                const status = STATUS_CONFIG[sub.status as SubmissionStatus]
+                const diff = DIFFICULTY_CONFIG[sub.problem.difficulty]
+                const status = STATUS_CONFIG[sub.status]
 
                 return (
                   <Link
