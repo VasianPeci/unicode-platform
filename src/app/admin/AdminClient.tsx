@@ -105,7 +105,7 @@ export default function AdminClient({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Link
-                href="/admin/teachers/new"
+                href="/admin/teachers"
                 className="flex items-center gap-3 p-4 rounded-xl"
                 style={{
                   background: 'var(--bg-elevated)',

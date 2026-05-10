@@ -99,9 +99,9 @@ export default function CreateProblemPage() {
   )
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex min-h-screen">
       <Sidebar />
-      <main className="flex-1 ml-60 overflow-y-auto p-8">
+      <main className="flex-1 ml-60 p-8">
         <div className="max-w-3xl mx-auto">
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-1 flex items-center gap-3">

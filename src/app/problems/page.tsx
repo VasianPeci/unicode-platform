@@ -1,17 +1,22 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Search, Filter, CheckCircle2, Circle, ChevronRight } from 'lucide-react'
+import { Search, CheckCircle2, Circle } from 'lucide-react'
 import { DIFFICULTY_CONFIG } from '@/types'
 import type { ProblemListItem } from '@/types'
 
 const DIFFICULTIES = ['All', 'EASY', 'MEDIUM', 'HARD']
 
 export default function ProblemsPage() {
+  const searchParams = useSearchParams()
   const [problems, setProblems] = useState<ProblemListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [difficulty, setDifficulty] = useState('All')
+  const [difficulty, setDifficulty] = useState(() => {
+    const d = searchParams.get('difficulty')
+    return d && DIFFICULTIES.includes(d) ? d : 'All'
+  })
   const [total, setTotal] = useState(0)
 
   const fetchProblems = useCallback(async () => {
@@ -104,7 +109,7 @@ export default function ProblemsPage() {
         ) : (
           <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
             {problems.map((p, i) => {
-              const diff = DIFFICULTY_CONFIG[p.difficulty]
+              const diff = DIFFICULTY_CONFIG[p.difficulty as keyof typeof DIFFICULTY_CONFIG]
               return (
                 <Link
                   key={p.id}

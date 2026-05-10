@@ -25,15 +25,12 @@ const teacherNav = [
 const adminNav = [
   ...studentNav,
   { href: '/admin', icon: ShieldCheck, label: 'Admin Panel' },
-  { href: '/admin/teachers', icon: GraduationCap, label: 'Teachers' },
-  { href: '/admin/students', icon: Users, label: 'Students' },
 ]
 
 export function Sidebar() {
   const { data: session, status } = useSession()
   const pathname = usePathname()
 
-  // 🚨 IMPORTANT: prevent rendering before hydration
   if (status === 'loading') {
     return (
       <aside className="fixed left-0 top-0 h-full w-60"
@@ -109,18 +106,27 @@ export function Sidebar() {
               key={href}
               href={href}
               className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all'
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200'
               )}
               style={{
                 background: active ? 'var(--accent)' : 'transparent',
                 color: active ? '#fff' : 'var(--text-secondary)',
               }}
+              onMouseEnter={(e) => {
+                if (!active) {
+                  e.currentTarget.style.background = 'var(--bg-elevated)'
+                  e.currentTarget.style.color = 'var(--text-primary)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!active) {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.color = 'var(--text-secondary)'
+                }
+              }}
             >
               <Icon size={16} />
               {label}
-              {active && (
-                <ChevronRight size={14} className="ml-auto opacity-60" />
-              )}
             </Link>
           )
         })}
@@ -170,12 +176,11 @@ export function Sidebar() {
             cursor: 'pointer',
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.background =
-              'rgba(248,113,113,0.1)'
+            ;(e.currentTarget as HTMLElement).style.background = 'rgba(248,113,113,0.1)'
             ;(e.currentTarget as HTMLElement).style.color = 'var(--danger)'
           }}
           onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.background = 'transparent'
+            ;(e.currentTarget as HTMLElement).style.background = 'transparent'
             ;(e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'
           }}
         >
