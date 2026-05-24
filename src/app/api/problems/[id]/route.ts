@@ -11,11 +11,11 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     where: {
       OR: [{ id: params.id }, { slug: params.id }],
       isPublished: true,
+      createdBy: { universityId: session.user.universityId },
     },
     include: {
       tags: { include: { tag: true } },
-      createdBy: { select: { name: true } },
-      _count: { select: { submissions: true } },
+      createdBy: { select: { id: true, name: true } },
     },
   })
 
@@ -27,9 +27,14 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     select: { id: true },
   })
 
-  const accepted = await prisma.submission.count({
-    where: { problemId: problem.id, status: 'ACCEPTED' },
-  })
+  const [accepted, totalSubmissions] = await Promise.all([
+    prisma.submission.count({
+      where: { problemId: problem.id, status: 'ACCEPTED', user: { role: 'STUDENT' } },
+    }),
+    prisma.submission.count({
+      where: { problemId: problem.id, user: { role: 'STUDENT' } },
+    }),
+  ])
 
   // Filter hidden test cases for students
   const testCases = (problem.testCases as any[]).map((tc, i) => ({
@@ -54,8 +59,10 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       starterCode: problem.starterCode,
       tags: problem.tags.map((pt) => ({ id: pt.tag.id, name: pt.tag.name, color: pt.tag.color })),
       createdBy: problem.createdBy,
-      acceptanceRate: problem._count.submissions > 0 ? Math.round((accepted / problem._count.submissions) * 100) : 0,
-      totalSubmissions: problem._count.submissions,
+      isCreatedByMe: problem.createdBy.id === session.user.id,
+      canDelete: session.user.role === 'ADMIN' || (session.user.role === 'TEACHER' && problem.createdBy.id === session.user.id),
+      acceptanceRate: totalSubmissions > 0 ? Math.round((accepted / totalSubmissions) * 100) : 0,
+      totalSubmissions,
       isSolved: !!solved,
     },
   })
@@ -65,6 +72,19 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const session = await getServerSession(authOptions)
   if (!session || !['ADMIN', 'TEACHER'].includes(session.user.role)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  const existing = await prisma.problem.findUnique({
+    where: { id: params.id },
+    select: { createdById: true, createdBy: { select: { universityId: true } } },
+  })
+
+  if (!existing) return NextResponse.json({ error: 'Problem not found' }, { status: 404 })
+  if (existing.createdBy.universityId !== session.user.universityId) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+  if (session.user.role === 'TEACHER' && existing.createdById !== session.user.id) {
+    return NextResponse.json({ error: 'You can only edit problems you created' }, { status: 403 })
   }
 
   const body = await req.json()
@@ -82,6 +102,23 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  await prisma.problem.delete({ where: { id: params.id } })
-  return NextResponse.json({ message: 'Problem deleted' })
+  const problem = await prisma.problem.findUnique({
+    where: { id: params.id },
+    select: { createdById: true, createdBy: { select: { universityId: true } } },
+  })
+
+  if (!problem) return NextResponse.json({ error: 'Problem not found' }, { status: 404 })
+  if (problem.createdBy.universityId !== session.user.universityId) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+  if (session.user.role === 'TEACHER' && problem.createdById !== session.user.id) {
+    return NextResponse.json({ error: 'You can only remove problems you created' }, { status: 403 })
+  }
+
+  await prisma.problem.update({
+    where: { id: params.id },
+    data: { isPublished: false },
+  })
+
+  return NextResponse.json({ message: 'Problem removed' })
 }

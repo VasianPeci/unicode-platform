@@ -1,9 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { Sidebar } from '@/components/layout/Sidebar'
-import { Trophy, Clock, Users, ChevronRight, Plus } from 'lucide-react'
-import { formatDateTime, formatRelative } from '@/lib/utils'
+import { Trophy, Clock, Users, ChevronRight, Plus, CheckCircle2, Trash2 } from 'lucide-react'
+import { formatCount, formatDateTime, formatRelative } from '@/lib/utils'
 
 type Props = {
   session: any
@@ -12,6 +13,8 @@ type Props = {
 
 export default function ContestsClient({ session, contests }: Props) {
   const now = new Date()
+  const [items, setItems] = useState(contests)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const getStatus = (c: { startsAt: string | Date; endsAt: string | Date }) => {
     const start = new Date(c.startsAt)
@@ -28,13 +31,30 @@ export default function ContestsClient({ session, contests }: Props) {
     ENDED: { label: 'Ended', color: 'var(--text-muted)', bg: 'var(--bg-elevated)' },
   }
 
-  const canCreate = ['ADMIN', 'TEACHER'].includes(session?.user?.role)
+  const canCreate = session?.user?.role === 'TEACHER'
+
+  async function handleDelete(contest: any) {
+    const canDelete = session?.user?.role === 'ADMIN' || (session?.user?.role === 'TEACHER' && contest.createdBy?.id === session?.user?.id)
+    if (!canDelete) return
+    const ok = window.confirm(`Remove "${contest.title}" from contests?`)
+    if (!ok) return
+
+    setDeletingId(contest.id)
+    try {
+      const res = await fetch(`/api/contests/${contest.id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setItems(prev => prev.filter(c => c.id !== contest.id))
+      }
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
 
-      <main className="flex-1 ml-60 overflow-y-auto p-8">
+      <main className="flex-1 app-shell-main overflow-y-auto p-8">
         <div className="max-w-4xl mx-auto">
 
           {/* HEADER */}
@@ -45,7 +65,7 @@ export default function ContestsClient({ session, contests }: Props) {
                 Contests
               </h1>
               <p style={{ color: 'var(--text-secondary)' }}>
-                {contests.length} total contests
+                {formatCount(items.length, 'total contest', 'total contests')}
               </p>
             </div>
 
@@ -62,15 +82,17 @@ export default function ContestsClient({ session, contests }: Props) {
 
           {/* LIST */}
           <div className="space-y-4">
-            {contests.length === 0 && (
+            {items.length === 0 && (
               <div className="glass rounded-2xl p-12 text-center">
                 No contests yet
               </div>
             )}
 
-            {contests.map((contest) => {
+            {items.map((contest) => {
               const status = getStatus(contest)
               const s = statusConfig[status]
+              const isCreatedByMe = contest.createdBy?.id === session?.user?.id
+              const canDelete = session?.user?.role === 'ADMIN' || (session?.user?.role === 'TEACHER' && isCreatedByMe)
 
               return (
                 <div
@@ -80,6 +102,12 @@ export default function ContestsClient({ session, contests }: Props) {
                   <div className="flex items-start justify-between gap-4">
 
                     <div className="flex-1">
+                      {session?.user?.role === 'STUDENT' && contest.participants?.length > 0 && (
+                        <span className="float-right inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full"
+                          style={{ color: 'var(--success)', background: 'rgba(52,211,153,0.1)' }}>
+                          <CheckCircle2 size={12} /> Joined
+                        </span>
+                      )}
 
                       {/* STATUS */}
                       <div className="flex items-center gap-3 mb-2">
@@ -101,8 +129,19 @@ export default function ContestsClient({ session, contests }: Props) {
 
                       {/* TITLE */}
                       <h2 className="text-lg font-semibold mb-1">
-                        {contest.title}
+                        <Link href={`/contests/${contest.id}`} style={{ color: 'var(--text-primary)', textDecoration: 'none' }}>
+                          {contest.title}
+                        </Link>
+                        {isCreatedByMe && (
+                          <span className="ml-2 text-xs px-1.5 py-0.5 rounded"
+                            style={{ color: 'var(--accent)', background: 'var(--accent-dim)' }}>
+                            Created by you
+                          </span>
+                        )}
                       </h2>
+                      <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>
+                        Created by {contest.createdBy?.name}
+                      </p>
 
                       {/* DESCRIPTION */}
                       {contest.description && (
@@ -115,26 +154,39 @@ export default function ContestsClient({ session, contests }: Props) {
                       <div className="flex gap-4 text-xs text-muted">
                         <span className="flex items-center gap-1">
                           <Trophy size={12} />
-                          {contest._count.problems} problems
+                          {formatCount(contest._count.problems, 'problem')}
                         </span>
 
                         <span className="flex items-center gap-1">
                           <Users size={12} />
-                          {contest._count.participants} participants
+                          {formatCount(contest._count.participants, 'participant')}
                         </span>
 
                         <span className="flex items-center gap-1">
                           <Clock size={12} />
-                          {formatDateTime(contest.startsAt)} → {formatDateTime(contest.endsAt)}
+                          {formatDateTime(contest.startsAt)} {'to'} {formatDateTime(contest.endsAt)}
                         </span>
                       </div>
 
                     </div>
 
-                    <ChevronRight
-                      size={20}
-                      className="text-muted group-hover:translate-x-1 transition-transform"
-                    />
+                    <div className="flex items-center gap-2">
+                      {canDelete && (
+                        <button
+                          onClick={() => handleDelete(contest)}
+                          disabled={deletingId === contest.id}
+                          className="p-2 rounded-lg transition-all"
+                          style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: deletingId === contest.id ? 'not-allowed' : 'pointer' }}
+                          title="Remove contest"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                      <ChevronRight
+                        size={20}
+                        className="text-muted group-hover:translate-x-1 transition-transform"
+                      />
+                    </div>
                   </div>
                 </div>
               )

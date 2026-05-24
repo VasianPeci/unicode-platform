@@ -2,8 +2,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Search, CheckCircle2, Circle } from 'lucide-react'
+import { Search, CheckCircle2, Circle, Trash2 } from 'lucide-react'
 import { DIFFICULTY_CONFIG } from '@/types'
+import { formatCount } from '@/lib/utils'
 import type { ProblemListItem } from '@/types'
 
 const DIFFICULTIES = ['All', 'EASY', 'MEDIUM', 'HARD']
@@ -18,6 +19,7 @@ export default function ProblemsPage() {
     return d && DIFFICULTIES.includes(d) ? d : 'All'
   })
   const [total, setTotal] = useState(0)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const fetchProblems = useCallback(async () => {
     setLoading(true)
@@ -37,12 +39,29 @@ export default function ProblemsPage() {
     return () => clearTimeout(t)
   }, [fetchProblems])
 
+  async function handleDelete(problem: ProblemListItem) {
+    if (!problem.canDelete) return
+    const ok = window.confirm(`Remove "${problem.title}" from the problem list?`)
+    if (!ok) return
+
+    setDeletingId(problem.id)
+    try {
+      const res = await fetch(`/api/problems/${problem.id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setProblems(prev => prev.filter(p => p.id !== problem.id))
+        setTotal(prev => Math.max(0, prev - 1))
+      }
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   return (
     <div className="p-8 max-w-5xl mx-auto">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Problems</h1>
-        <p style={{ color: 'var(--text-secondary)' }}>{total} problems available</p>
+        <p style={{ color: 'var(--text-secondary)' }}>{formatCount(total, 'problem')} available</p>
       </div>
 
       {/* Filters */}
@@ -52,7 +71,7 @@ export default function ProblemsPage() {
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search problems…"
+            placeholder="Search problems..."
             className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm"
             style={{
               background: 'var(--bg-surface)', border: '1px solid var(--border)',
@@ -91,10 +110,11 @@ export default function ProblemsPage() {
         <div className="grid grid-cols-12 gap-4 px-6 py-3 text-xs font-medium"
           style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>
           <div className="col-span-1">#</div>
-          <div className="col-span-5">Title</div>
+          <div className="col-span-4">Title</div>
           <div className="col-span-2">Difficulty</div>
           <div className="col-span-2">Acceptance</div>
           <div className="col-span-2">Tags</div>
+          <div className="col-span-1"></div>
         </div>
 
         {loading ? (
@@ -111,11 +131,9 @@ export default function ProblemsPage() {
             {problems.map((p, i) => {
               const diff = DIFFICULTY_CONFIG[p.difficulty as keyof typeof DIFFICULTY_CONFIG]
               return (
-                <Link
+                <div
                   key={p.id}
-                  href={`/problems/${p.slug}`}
                   className="grid grid-cols-12 gap-4 px-6 py-4 items-center transition-all group"
-                  style={{ textDecoration: 'none' }}
                   onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-elevated)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                 >
@@ -128,14 +146,20 @@ export default function ProblemsPage() {
                   </div>
 
                   {/* Title */}
-                  <div className="col-span-5">
-                    <span className="text-sm font-medium group-hover:text-white transition-colors"
-                      style={{ color: 'var(--text-primary)' }}>
+                  <div className="col-span-4 min-w-0">
+                    <Link href={`/problems/${p.slug}`} className="text-sm font-medium group-hover:text-white transition-colors"
+                      style={{ color: 'var(--text-primary)', textDecoration: 'none' }}>
                       {p.title}
-                    </span>
+                    </Link>
                     <span className="ml-2 text-xs" style={{ color: 'var(--text-muted)' }}>
                       {p.points} pts
                     </span>
+                    {p.isCreatedByMe && (
+                      <span className="ml-2 text-xs px-1.5 py-0.5 rounded"
+                        style={{ color: 'var(--accent)', background: 'var(--accent-dim)' }}>
+                        Created by you
+                      </span>
+                    )}
                   </div>
 
                   {/* Difficulty */}
@@ -165,7 +189,21 @@ export default function ProblemsPage() {
                       <span className="text-xs" style={{ color: 'var(--text-muted)' }}>+{p.tags.length - 2}</span>
                     )}
                   </div>
-                </Link>
+
+                  <div className="col-span-1 flex justify-end">
+                    {p.canDelete && (
+                      <button
+                        onClick={() => handleDelete(p)}
+                        disabled={deletingId === p.id}
+                        className="p-1.5 rounded-lg transition-all"
+                        style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: deletingId === p.id ? 'not-allowed' : 'pointer' }}
+                        title="Remove problem"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    )}
+                  </div>
+                </div>
               )
             })}
           </div>

@@ -28,6 +28,14 @@ export function formatMemory(kb: number) {
   return `${(kb / 1024).toFixed(1)} MB`
 }
 
+export function pluralize(count: number, singular: string, plural = `${singular}s`) {
+  return count === 1 ? singular : plural
+}
+
+export function formatCount(count: number, singular: string, plural = `${singular}s`) {
+  return `${count} ${pluralize(count, singular, plural)}`
+}
+
 export function getContestStatus(startsAt: string | Date, endsAt: string | Date) {
   const now = new Date()
   const start = new Date(startsAt)

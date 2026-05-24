@@ -69,10 +69,28 @@ model User {
   createdProblems     Problem[]           @relation("ProblemAuthor")
   createdContests     Contest[]           @relation("ContestCreator")
   contestParticipants ContestParticipant[]
+  emailVerifications  EmailVerification[]
 
   @@index([universityId])
   @@index([totalPoints])
   @@map("users")
+}
+
+model EmailVerification {
+  id         String    @id @default(uuid())
+  email      String
+  codeHash   String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([email])
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("email_verifications")
 }
 
 model Problem {

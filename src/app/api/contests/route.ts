@@ -8,11 +8,15 @@ export async function GET(req: NextRequest) {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const contests = await prisma.contest.findMany({
+    where: { createdBy: { universityId: session.user.universityId } },
     orderBy: { startsAt: 'desc' },
     include: {
-      createdBy: { select: { name: true } },
+      createdBy: { select: { id: true, name: true } },
       _count: {
-        select: { problems: true, participants: true },
+        select: {
+          problems: { where: { problem: { isPublished: true } } },
+          participants: { where: { user: { role: 'STUDENT' } } },
+        },
       },
     },
   })
@@ -29,6 +33,8 @@ export async function GET(req: NextRequest) {
     participantCount: c._count.participants,
     status: now < c.startsAt ? 'UPCOMING' : now > c.endsAt ? 'ENDED' : 'ACTIVE',
     createdBy: c.createdBy,
+    isCreatedByMe: c.createdBy.id === session.user.id,
+    canDelete: session.user.role === 'ADMIN' || (session.user.role === 'TEACHER' && c.createdBy.id === session.user.id),
   }))
 
   return NextResponse.json({ data: result })
@@ -36,12 +42,29 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
-  if (!session || !['ADMIN', 'TEACHER'].includes(session.user.role)) {
+  if (!session || session.user.role !== 'TEACHER') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
   try {
     const { title, description, startsAt, endsAt, isPublic, problemIds, rules } = await req.json()
+    const ids = Array.isArray(problemIds) ? problemIds : []
+
+    if (ids.length === 0) {
+      return NextResponse.json({ error: 'Add at least one problem' }, { status: 400 })
+    }
+
+    const allowedProblemCount = await prisma.problem.count({
+      where: {
+        id: { in: ids },
+        isPublished: true,
+        createdBy: { universityId: session.user.universityId },
+      },
+    })
+
+    if (allowedProblemCount !== ids.length) {
+      return NextResponse.json({ error: 'One or more problems are not available in your university' }, { status: 400 })
+    }
 
     const contest = await prisma.contest.create({
       data: {
@@ -52,9 +75,9 @@ export async function POST(req: NextRequest) {
         isPublic: isPublic ?? true,
         rules,
         createdById: session.user.id,
-        ...(problemIds?.length && {
+        ...(ids.length && {
           problems: {
-            create: problemIds.map((id: string, idx: number) => ({
+            create: ids.map((id: string, idx: number) => ({
               problemId: id,
               orderIndex: idx,
             })),

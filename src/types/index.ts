@@ -19,6 +19,9 @@ export interface ProblemListItem {
   slug: string
   difficulty: Difficulty
   points: number
+  createdBy?: { id: string; name: string }
+  isCreatedByMe?: boolean
+  canDelete?: boolean
   tags: { id: string; name: string; color: string }[]
   acceptanceRate: number
   totalSubmissions: number
@@ -33,7 +36,7 @@ export interface ProblemDetail extends ProblemListItem {
   starterCode: Record<string, string>
   timeLimit: number
   memoryLimit: number
-  createdBy: { name: string }
+  createdBy: { id: string; name: string }
 }
 
 export interface Example {
@@ -106,17 +109,17 @@ export const LANGUAGES = [
 export type Language = (typeof LANGUAGES)[number]['id']
 
 export const DIFFICULTY_CONFIG = {
-  EASY: { label: 'Easy', color: 'text-emerald-400', bg: 'bg-emerald-400/10', points: 10 },
-  MEDIUM: { label: 'Medium', color: 'text-amber-400', bg: 'bg-amber-400/10', points: 20 },
-  HARD: { label: 'Hard', color: 'text-red-400', bg: 'bg-red-400/10', points: 40 },
+  EASY: { label: 'Easy', color: '#34d399', bg: 'rgba(52,211,153,0.1)', points: 10 },
+  MEDIUM: { label: 'Medium', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', points: 20 },
+  HARD: { label: 'Hard', color: '#f87171', bg: 'rgba(248,113,113,0.1)', points: 40 },
 } as const
 
 export const STATUS_CONFIG: Record<SubmissionStatus, { label: string; color: string }> = {
-  PENDING:               { label: 'Pending',                color: 'text-slate-400' },
-  ACCEPTED:              { label: 'Accepted',               color: 'text-emerald-400' },
-  WRONG_ANSWER:          { label: 'Wrong Answer',           color: 'text-red-400' },
-  TIME_LIMIT_EXCEEDED:   { label: 'Time Limit Exceeded',    color: 'text-amber-400' },
-  MEMORY_LIMIT_EXCEEDED: { label: 'Memory Limit Exceeded',  color: 'text-amber-400' },
-  RUNTIME_ERROR:         { label: 'Runtime Error',          color: 'text-red-400' },
-  COMPILATION_ERROR:     { label: 'Compilation Error',      color: 'text-red-400' },
+  PENDING:               { label: 'Pending',                color: '#94a3b8' },
+  ACCEPTED:              { label: 'Accepted',               color: '#34d399' },
+  WRONG_ANSWER:          { label: 'Wrong Answer',           color: '#f87171' },
+  TIME_LIMIT_EXCEEDED:   { label: 'Time Limit Exceeded',    color: '#f59e0b' },
+  MEMORY_LIMIT_EXCEEDED: { label: 'Memory Limit Exceeded',  color: '#f59e0b' },
+  RUNTIME_ERROR:         { label: 'Runtime Error',          color: '#f87171' },
+  COMPILATION_ERROR:     { label: 'Compilation Error',      color: '#f87171' },
 }

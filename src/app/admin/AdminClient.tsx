@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import { Sidebar } from '@/components/layout/Sidebar'
 import {
   Users,
   GraduationCap,
@@ -28,28 +27,28 @@ export default function AdminClient({
 }: Props) {
   const stats = [
     {
-      label: 'Teachers',
+      label: `Teacher${teacherCount == 1 ? '' : 's'}`,
       value: teacherCount,
       icon: GraduationCap,
       href: '/admin/teachers',
       color: '#7c6df8',
     },
     {
-      label: 'Students',
+      label: `Student${studentCount == 1 ? '' : 's'}`,
       value: studentCount,
       icon: Users,
       href: '/admin/students',
       color: '#38bdf8',
     },
     {
-      label: 'Problems',
+      label: `Problem${problemCount == 1 ? '' : 's'}`,
       value: problemCount,
       icon: BookOpen,
       href: '/problems',
       color: 'var(--success)',
     },
     {
-      label: 'Contests',
+      label: `Contest${contestCount == 1 ? '' : 's'}`,
       value: contestCount,
       icon: Trophy,
       href: '/contests',
@@ -58,11 +57,7 @@ export default function AdminClient({
   ]
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar />
-
-      <main className="flex-1 ml-60 overflow-y-auto p-8">
-        <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto">
 
           {/* HEADER */}
           <div className="mb-8">
@@ -114,7 +109,7 @@ export default function AdminClient({
               >
                 <GraduationCap size={18} style={{ color: 'var(--accent)' }} />
                 <span className="text-sm font-medium">
-                  Add teacher account
+                  Manage teachers
                 </span>
                 <Plus size={16} className="ml-auto text-muted" />
               </Link>
@@ -134,8 +129,6 @@ export default function AdminClient({
             </div>
           </div>
 
-        </div>
-      </main>
     </div>
   )
 }

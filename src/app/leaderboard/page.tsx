@@ -2,8 +2,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { Sidebar } from '@/components/layout/Sidebar'
-import { Trophy, Crown, Star, Code2 } from 'lucide-react'
-import { generateAvatar } from '@/lib/utils'
+import { Crown, Star, Code2 } from 'lucide-react'
+import { formatCount, generateAvatar } from '@/lib/utils'
 
 export default async function LeaderboardPage() {
   const session = await getServerSession(authOptions)!
@@ -23,7 +23,7 @@ export default async function LeaderboardPage() {
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
-      <main className="flex-1 ml-60 overflow-y-auto p-8">
+      <main className="flex-1 app-shell-main overflow-y-auto p-8">
         <div className="max-w-3xl mx-auto">
           {/* Header */}
           <div className="mb-8">
@@ -32,7 +32,7 @@ export default async function LeaderboardPage() {
               Leaderboard
             </h1>
             <p style={{ color: 'var(--text-secondary)' }}>
-              {session!.user.universityName} · Top {users.length} students
+              {session!.user.universityName} - Top {formatCount(users.length, 'student')}
             </p>
           </div>
 
@@ -44,7 +44,7 @@ export default async function LeaderboardPage() {
               <div>
                 <p className="font-medium">Your current rank</p>
                 <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                  {session!.user.totalPoints} points
+                  {formatCount(session!.user.totalPoints, 'point')}
                 </p>
               </div>
             </div>
@@ -53,10 +53,10 @@ export default async function LeaderboardPage() {
           {/* Top 3 podium */}
           {users.length >= 3 && (
             <div className="grid grid-cols-3 gap-4 mb-8">
-              {[users[1], users[0], users[2]].map((u, podiumPos) => {
-                const actualRank = podiumPos === 0 ? 2 : podiumPos === 1 ? 1 : 3
+              {users.slice(0, 3).map((u, index) => {
+                const actualRank = index + 1
                 const colors = { 1: '#f59e0b', 2: '#94a3b8', 3: '#cd7f32' }
-                const heights = { 1: 'h-28', 2: 'h-36', 3: 'h-24' }
+                const heights = { 1: 'h-36', 2: 'h-28', 3: 'h-24' }
                 const color = colors[actualRank as keyof typeof colors]
                 return (
                   <div key={u.id} className={`glass rounded-2xl p-4 flex flex-col items-center text-center ${heights[actualRank as keyof typeof heights]}`}
@@ -100,7 +100,7 @@ export default async function LeaderboardPage() {
                     }}>
                     <div className="col-span-1">
                       <span className="text-sm font-bold" style={{ color: rankColor }}>
-                        {rank <= 3 ? ['🥇', '🥈', '🥉'][rank - 1] : `#${rank}`}
+                        #{rank}
                       </span>
                     </div>
                     <div className="col-span-5 flex items-center gap-3">

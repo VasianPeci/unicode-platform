@@ -1,7 +1,6 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Sidebar } from '@/components/layout/Sidebar'
 import { Plus, Trash2, Loader2, BookOpen, Eye, EyeOff } from 'lucide-react'
 
 const DIFFICULTIES = ['EASY', 'MEDIUM', 'HARD']
@@ -75,15 +74,6 @@ export default function CreateProblemPage() {
     const data = await res.json()
     if (!res.ok) { setError(data.error || 'Failed to create problem'); setLoading(false); return }
 
-    // If publish, also patch it
-    if (publish && data.data?.id) {
-      await fetch(`/api/problems/${data.data.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isPublished: true }),
-      })
-    }
-
     router.push('/problems')
   }
 
@@ -99,10 +89,7 @@ export default function CreateProblemPage() {
   )
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar />
-      <main className="flex-1 ml-60 p-8">
-        <div className="max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto">
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-1 flex items-center gap-3">
               <BookOpen size={28} style={{ color: 'var(--accent)' }} />
@@ -118,7 +105,7 @@ export default function CreateProblemPage() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Title</label>
-                  <input value={form.title} onChange={set('title')} placeholder="Two Sum"
+                  <input value={form.title} onChange={set('title')}
                     required className="w-full px-4 py-3 rounded-xl text-sm transition-all" style={inputStyle}
                     onFocus={e => e.target.style.borderColor = 'var(--accent)'}
                     onBlur={e => e.target.style.borderColor = 'var(--border)'} />
@@ -153,7 +140,6 @@ export default function CreateProblemPage() {
                     Description <span className="text-xs font-normal" style={{ color: 'var(--text-muted)' }}>(Markdown supported)</span>
                   </label>
                   <textarea value={form.description} onChange={set('description')} rows={8}
-                    placeholder="Given an array of integers nums and an integer target..."
                     required className="w-full px-4 py-3 rounded-xl text-sm resize-y font-mono" style={inputStyle}
                     onFocus={e => e.target.style.borderColor = 'var(--accent)'}
                     onBlur={e => e.target.style.borderColor = 'var(--border)'} />
@@ -162,7 +148,6 @@ export default function CreateProblemPage() {
                 <div>
                   <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Constraints</label>
                   <textarea value={form.constraints} onChange={set('constraints')} rows={3}
-                    placeholder="2 <= nums.length <= 10^4&#10;-10^9 <= nums[i] <= 10^9"
                     className="w-full px-4 py-3 rounded-xl text-sm resize-y font-mono" style={inputStyle}
                     onFocus={e => e.target.style.borderColor = 'var(--accent)'}
                     onBlur={e => e.target.style.borderColor = 'var(--border)'} />
@@ -223,7 +208,7 @@ export default function CreateProblemPage() {
             <div className="glass rounded-2xl p-6">
               {sectionTitle('Test Cases')}
               <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>
-                Hidden test cases are not shown to students. Add at least 2–3 hidden cases for robust testing.
+                Hidden test cases are not shown to students. Add at least 2-3 hidden cases for robust testing.
               </p>
               <div className="space-y-3">
                 {testCases.map((tc, i) => (
@@ -306,7 +291,6 @@ export default function CreateProblemPage() {
                   <div key={i} className="flex gap-2">
                     <input value={hint}
                       onChange={e => setHints(prev => prev.map((h, idx) => idx === i ? e.target.value : h))}
-                      placeholder={`Hint ${i + 1}...`}
                       className="flex-1 px-4 py-2.5 rounded-xl text-sm" style={inputStyle}
                       onFocus={e => e.target.style.borderColor = 'var(--accent)'}
                       onBlur={e => e.target.style.borderColor = 'var(--border)'} />
@@ -344,12 +328,10 @@ export default function CreateProblemPage() {
                 className="flex items-center gap-2 px-8 py-3 rounded-xl text-sm font-medium transition-all"
                 style={{ background: 'var(--accent)', color: '#fff', border: 'none', cursor: loading ? 'not-allowed' : 'pointer' }}>
                 {loading && <Loader2 size={15} className="animate-spin" />}
-                {loading ? 'Publishing…' : 'Publish Problem'}
+                {loading ? 'Publishing...' : 'Publish Problem'}
               </button>
             </div>
           </form>
-        </div>
-      </main>
     </div>
   )
 }

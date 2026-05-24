@@ -6,9 +6,17 @@ export default withAuth(
     const token = req.nextauth.token
     const pathname = req.nextUrl.pathname
 
+    if (pathname.startsWith('/dashboard') && token?.role === 'ADMIN') {
+      return NextResponse.redirect(new URL('/admin', req.url))
+    }
+
     // Admin-only routes
     if (pathname.startsWith('/admin') && token?.role !== 'ADMIN' && token?.role !== 'TEACHER') {
       return NextResponse.redirect(new URL('/dashboard', req.url))
+    }
+
+    if ((pathname.startsWith('/admin/problems/new') || pathname.startsWith('/admin/contests/new')) && token?.role !== 'TEACHER') {
+      return NextResponse.redirect(new URL(token?.role === 'ADMIN' ? '/admin' : '/dashboard', req.url))
     }
 
     // Strict admin-only
@@ -29,6 +37,7 @@ export const config = {
   matcher: [
     '/dashboard/:path*',
     '/problems/:path*',
+    '/submissions/:path*',
     '/contests/:path*',
     '/leaderboard/:path*',
     '/admin/:path*',

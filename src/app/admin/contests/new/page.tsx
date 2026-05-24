@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Sidebar } from "@/components/layout/Sidebar";
 import { Trophy, Plus, X, Loader2, Search } from "lucide-react";
 import { DIFFICULTY_CONFIG } from "@/types";
 
@@ -97,10 +96,7 @@ export default function CreateContestPage() {
   );
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar />
-      <main className="flex-1 ml-60 p-8">
-        <div className="max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto">
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-1 flex items-center gap-3">
               <Trophy size={28} style={{ color: "var(--accent)" }} />
@@ -127,7 +123,6 @@ export default function CreateContestPage() {
                     value={form.title}
                     onChange={set("title")}
                     required
-                    placeholder="Week 3 Assessment — Graphs"
                     className="w-full px-4 py-3 rounded-xl text-sm"
                     style={inputStyle}
                     onFocus={(e) =>
@@ -150,7 +145,6 @@ export default function CreateContestPage() {
                     value={form.description}
                     onChange={set("description")}
                     rows={3}
-                    placeholder="Covers BFS, DFS, and shortest path algorithms..."
                     className="w-full px-4 py-3 rounded-xl text-sm resize-none"
                     style={inputStyle}
                     onFocus={(e) =>
@@ -220,7 +214,6 @@ export default function CreateContestPage() {
                     value={form.rules}
                     onChange={set("rules")}
                     rows={3}
-                    placeholder="No external resources. Each problem can be submitted multiple times..."
                     className="w-full px-4 py-3 rounded-xl text-sm resize-none"
                     style={inputStyle}
                     onFocus={(e) =>
@@ -341,7 +334,6 @@ export default function CreateContestPage() {
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search problems to add…"
                   className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm"
                   style={inputStyle}
                   onFocus={(e) =>
@@ -358,7 +350,7 @@ export default function CreateContestPage() {
                     style={{ color: "var(--text-muted)" }}
                   >
                     {problems.length === 0
-                      ? "Loading problems…"
+                      ? "Loading problems..."
                       : "No problems found"}
                   </p>
                 )}
@@ -445,12 +437,10 @@ export default function CreateContestPage() {
                 }}
               >
                 {loading && <Loader2 size={15} className="animate-spin" />}
-                {loading ? "Creating…" : "Create Contest"}
+                {loading ? "Creating..." : "Create Contest"}
               </button>
             </div>
           </form>
-        </div>
-      </main>
     </div>
   );
 }

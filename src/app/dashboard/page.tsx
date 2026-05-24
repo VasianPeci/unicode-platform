@@ -8,8 +8,9 @@ export default async function DashboardPage() {
   const session = await getServerSession(authOptions)
 
   if (!session) redirect('/auth/login')
+  if (session.user.role === 'ADMIN') redirect('/admin')
 
-  const [recentSubmissions, problemStats, userRank, upcomingContest] =
+  const [recentSubmissions, problemStats, currentUser, upcomingContest, createdProblemCount, createdContestCount, submissionCount] =
     await Promise.all([
       prisma.submission.findMany({
         where: { userId: session.user.id },
@@ -28,17 +29,29 @@ export default async function DashboardPage() {
         _count: true,
       }),
 
-      prisma.user.count({
-        where: {
-          universityId: session.user.universityId,
-          role: 'STUDENT',
-          totalPoints: { gt: session.user.totalPoints },
-        },
+      prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { totalPoints: true },
       }),
 
       prisma.contest.findFirst({
-        where: { startsAt: { gt: new Date() } },
+        where: {
+          startsAt: { gt: new Date() },
+          createdBy: { universityId: session.user.universityId },
+        },
         orderBy: { startsAt: 'asc' },
+      }),
+
+      prisma.problem.count({
+        where: { createdById: session.user.id, isPublished: true },
+      }),
+
+      prisma.contest.count({
+        where: { createdById: session.user.id },
+      }),
+
+      prisma.submission.count({
+        where: { userId: session.user.id },
       }),
     ])
 
@@ -65,10 +78,13 @@ export default async function DashboardPage() {
   return (
     <DashboardClient
       session={session as any}
+      currentTotalPoints={currentUser?.totalPoints ?? session.user.totalPoints}
       recentSubmissions={formattedSubmissions}
       problemStats={problemStats}
-      userRank={userRank}
       upcomingContest={formattedContest}
+      createdProblemCount={createdProblemCount}
+      createdContestCount={createdContestCount}
+      submissionCount={submissionCount}
     />
   )
 }

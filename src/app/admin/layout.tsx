@@ -9,7 +9,7 @@ export default function AdminLayout({
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
 
-      <main className="flex-1 ml-60 overflow-y-auto p-8">
+      <main className="flex-1 app-shell-main overflow-y-auto p-8">
         {children}
       </main>
     </div>

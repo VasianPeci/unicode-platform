@@ -19,7 +19,7 @@ export default async function AdminPage() {
         where: { universityId: session.user.universityId, role: 'STUDENT' },
       }),
       prisma.problem.count({
-        where: { createdBy: { universityId: session.user.universityId } },
+        where: { isPublished: true, createdBy: { universityId: session.user.universityId } },
       }),
       prisma.contest.count({
         where: { createdBy: { universityId: session.user.universityId } },

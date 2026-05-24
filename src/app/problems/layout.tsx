@@ -10,7 +10,7 @@ export default async function ProblemsLayout({ children }: { children: React.Rea
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
-      <main className="flex-1 ml-60 overflow-y-auto">
+      <main className="flex-1 app-shell-main overflow-y-auto">
         {children}
       </main>
     </div>

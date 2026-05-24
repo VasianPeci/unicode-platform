@@ -1,6 +1,7 @@
 'use client'
 
-import { Users, Star, CheckCircle2 } from 'lucide-react'
+import { useState } from 'react'
+import { Users, Star, CheckCircle2, Trash2 } from 'lucide-react'
 import { generateAvatar, formatDate } from '@/lib/utils'
 
 type Props = {
@@ -8,7 +9,24 @@ type Props = {
   students: any[]
 }
 
-export default function StudentsClient({ session, students }: Props) {
+export default function StudentsClient({ session, students: initial }: Props) {
+  const [students, setStudents] = useState(initial)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [confirmId, setConfirmId] = useState<string | null>(null)
+
+  async function handleDelete(id: string) {
+    setDeletingId(id)
+    try {
+      const res = await fetch(`/api/users/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setStudents(prev => prev.filter(s => s.id !== id))
+      }
+    } finally {
+      setDeletingId(null)
+      setConfirmId(null)
+    }
+  }
+
   return (
     <div className="max-w-5xl mx-auto">
 
@@ -18,7 +36,6 @@ export default function StudentsClient({ session, students }: Props) {
           <Users size={28} style={{ color: 'var(--accent)' }} />
           Students
         </h1>
-
         <p style={{ color: 'var(--text-secondary)' }}>
           {students.length} enrolled students
         </p>
@@ -30,16 +47,13 @@ export default function StudentsClient({ session, students }: Props) {
         {/* HEADER ROW */}
         <div
           className="grid grid-cols-12 gap-4 px-6 py-3 text-xs font-medium"
-          style={{
-            color: 'var(--text-muted)',
-            borderBottom: '1px solid var(--border)',
-          }}
+          style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}
         >
           <div className="col-span-4">Student</div>
           <div className="col-span-3">Email</div>
           <div className="col-span-2">Points</div>
           <div className="col-span-2">Solved</div>
-          <div className="col-span-1">Joined</div>
+          <div className="col-span-1"></div>
         </div>
 
         {/* ROWS */}
@@ -48,37 +62,27 @@ export default function StudentsClient({ session, students }: Props) {
             <div
               key={s.id}
               className="grid grid-cols-12 gap-4 px-6 py-4 items-center transition-all"
+              onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-elevated)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
             >
-
               {/* STUDENT */}
               <div className="col-span-4 flex items-center gap-3">
                 <div className="relative">
                   <div
                     className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
-                    style={{
-                      background: 'var(--bg-elevated)',
-                      color: 'var(--accent)',
-                      border: '1px solid var(--border)',
-                    }}
+                    style={{ background: 'var(--bg-elevated)', color: 'var(--accent)', border: '1px solid var(--border)' }}
                   >
                     {generateAvatar(s.name)}
                   </div>
-
                   {i < 3 && (
                     <span className="absolute -top-1 -right-1 text-xs">
-                      {['🥇', '🥈', '🥉'][i]}
+                      #{i + 1}
                     </span>
                   )}
                 </div>
-
                 <div>
                   <p className="text-sm font-medium">{s.name}</p>
-                  <p
-                    className="text-xs"
-                    style={{
-                      color: s.isActive ? 'var(--success)' : 'var(--danger)',
-                    }}
-                  >
+                  <p className="text-xs" style={{ color: s.isActive ? 'var(--success)' : 'var(--danger)' }}>
                     {s.isActive ? 'Active' : 'Inactive'}
                   </p>
                 </div>
@@ -86,10 +90,7 @@ export default function StudentsClient({ session, students }: Props) {
 
               {/* EMAIL */}
               <div className="col-span-3">
-                <p
-                  className="text-sm truncate"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
+                <p className="text-sm truncate" style={{ color: 'var(--text-secondary)' }}>
                   {s.email}
                 </p>
               </div>
@@ -97,38 +98,64 @@ export default function StudentsClient({ session, students }: Props) {
               {/* POINTS */}
               <div className="col-span-2 flex items-center gap-1.5">
                 <Star size={13} style={{ color: '#f59e0b' }} />
-                <span className="text-sm font-semibold">
-                  {s.totalPoints}
-                </span>
+                <span className="text-sm font-semibold">{s.totalPoints}</span>
               </div>
 
               {/* SOLVED */}
               <div className="col-span-2 flex items-center gap-1.5">
                 <CheckCircle2 size={13} style={{ color: 'var(--success)' }} />
-                <span className="text-sm">
-                  {s._count.submissions}
-                </span>
+                <span className="text-sm">{s._count.submissions}</span>
               </div>
 
-              {/* DATE */}
-              <div className="col-span-1">
-                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                  {formatDate(s.createdAt)}
-                </p>
+              {/* DELETE */}
+              <div className="col-span-1 flex justify-end">
+                {confirmId === s.id ? (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleDelete(s.id)}
+                      disabled={deletingId === s.id}
+                      className="text-xs px-2 py-1 rounded-lg font-medium"
+                      style={{ background: 'var(--danger)', color: '#fff', border: 'none', cursor: 'pointer', opacity: deletingId === s.id ? 0.6 : 1 }}
+                    >
+                      {deletingId === s.id ? '...' : 'Yes'}
+                    </button>
+                    <button
+                      onClick={() => setConfirmId(null)}
+                      className="text-xs px-2 py-1 rounded-lg font-medium"
+                      style={{ background: 'var(--bg-elevated)', color: 'var(--text-secondary)', border: '1px solid var(--border)', cursor: 'pointer' }}
+                    >
+                      No
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setConfirmId(s.id)}
+                    className="p-1.5 rounded-lg transition-all"
+                    style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.background = 'rgba(248,113,113,0.1)'
+                      e.currentTarget.style.color = 'var(--danger)'
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background = 'none'
+                      e.currentTarget.style.color = 'var(--text-muted)'
+                    }}
+                    title="Delete student"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                )}
               </div>
-
             </div>
           ))}
 
           {students.length === 0 && (
-            <div className="px-6 py-12 text-center text-muted">
+            <div className="px-6 py-12 text-center" style={{ color: 'var(--text-muted)' }}>
               No students enrolled yet
             </div>
           )}
         </div>
-
       </div>
-
     </div>
   )
 }

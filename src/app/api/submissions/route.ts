@@ -10,17 +10,64 @@ export async function POST(req: NextRequest) {
 
   try {
     const { code, language, problemId, contestId } = await req.json()
+    const activeContestId = typeof contestId === 'string' && contestId.trim() ? contestId : null
+    const isStudent = session.user.role === 'STUDENT'
 
     if (!code || !language || !problemId) {
       return NextResponse.json({ error: 'code, language and problemId are required' }, { status: 400 })
     }
 
-    const problem = await prisma.problem.findUnique({
-      where: { id: problemId },
+    const problem = await prisma.problem.findFirst({
+      where: { id: problemId, isPublished: true },
       select: { testCases: true, timeLimit: true, memoryLimit: true, points: true },
     })
 
     if (!problem) return NextResponse.json({ error: 'Problem not found' }, { status: 404 })
+
+    let contestPointValue = problem.points
+
+    if (activeContestId) {
+      if (!isStudent) {
+        return NextResponse.json({ error: 'Only students can submit to contests' }, { status: 403 })
+      }
+
+      const contest = await prisma.contest.findFirst({
+        where: {
+          id: activeContestId,
+          createdBy: { universityId: session.user.universityId },
+        },
+        select: {
+          startsAt: true,
+          endsAt: true,
+          problems: {
+            where: { problemId },
+            select: { pointOverride: true },
+          },
+          participants: {
+            where: { userId: session.user.id },
+            select: { userId: true },
+          },
+        },
+      })
+
+      if (!contest) return NextResponse.json({ error: 'Contest not found' }, { status: 404 })
+
+      const now = new Date()
+      if (now < contest.startsAt) {
+        return NextResponse.json({ error: 'Contest has not started yet' }, { status: 400 })
+      }
+      if (now > contest.endsAt) {
+        return NextResponse.json({ error: 'Contest has already ended' }, { status: 400 })
+      }
+      if (contest.problems.length === 0) {
+        return NextResponse.json({ error: 'Problem is not part of this contest' }, { status: 400 })
+      }
+      if (contest.participants.length === 0) {
+        return NextResponse.json({ error: 'Join the contest before submitting' }, { status: 403 })
+      }
+
+      contestPointValue = contest.problems[0].pointOverride ?? problem.points
+    }
 
     // Create pending submission
     const submission = await prisma.submission.create({
@@ -30,7 +77,7 @@ export async function POST(req: NextRequest) {
         status: 'PENDING',
         userId: session.user.id,
         problemId,
-        contestId: contestId || null,
+        contestId: activeContestId,
       },
     })
 
@@ -55,20 +102,29 @@ export async function POST(req: NextRequest) {
         },
       })
 
-      if (!previousAccepted) {
+      if (isStudent && !previousAccepted) {
         pointsAwarded = problem.points
-        // Award points to user
         await prisma.user.update({
           where: { id: session.user.id },
           data: { totalPoints: { increment: pointsAwarded } },
         })
+      }
 
-        // If in contest, award contest points too
-        if (contestId) {
-          await prisma.contestParticipant.upsert({
-            where: { contestId_userId: { contestId, userId: session.user.id } },
-            update: { score: { increment: pointsAwarded } },
-            create: { contestId, userId: session.user.id, score: pointsAwarded },
+      if (isStudent && activeContestId) {
+        const previousContestAccepted = await prisma.submission.findFirst({
+          where: {
+            userId: session.user.id,
+            problemId,
+            contestId: activeContestId,
+            status: 'ACCEPTED',
+            id: { not: submission.id },
+          },
+        })
+
+        if (!previousContestAccepted) {
+          await prisma.contestParticipant.update({
+            where: { contestId_userId: { contestId: activeContestId, userId: session.user.id } },
+            data: { score: { increment: contestPointValue } },
           })
         }
       }
@@ -111,6 +167,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url)
   const problemId = searchParams.get('problemId')
+  const contestId = searchParams.get('contestId')
   const userId = searchParams.get('userId') || session.user.id
 
   // Non-admins can only see their own submissions
@@ -120,11 +177,14 @@ export async function GET(req: NextRequest) {
     where: {
       userId: targetUserId,
       ...(problemId && { problemId }),
+      ...(contestId && { contestId }),
     },
     orderBy: { submittedAt: 'desc' },
     take: 20,
     select: {
       id: true,
+      problemId: true,
+      contestId: true,
       status: true,
       language: true,
       runtimeMs: true,

@@ -26,8 +26,12 @@ export const authOptions: NextAuthOptions = {
           include: { university: true },
         })
 
-        if (!user || !user.isActive) {
+        if (!user) {
           throw new Error('Invalid credentials')
+        }
+
+        if (!user.isActive) {
+          throw new Error('EMAIL_NOT_VERIFIED')
         }
 
         const isValid = await bcrypt.compare(credentials.password, user.passwordHash)

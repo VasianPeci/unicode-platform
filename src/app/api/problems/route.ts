@@ -3,6 +3,27 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
+function slugify(text: string) {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+async function createUniqueProblemSlug(title: string) {
+  const base = slugify(title) || 'problem'
+  let slug = base
+  let suffix = 2
+
+  while (await prisma.problem.findUnique({ where: { slug }, select: { id: true } })) {
+    slug = `${base}-${suffix}`
+    suffix += 1
+  }
+
+  return slug
+}
+
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -14,7 +35,10 @@ export async function GET(req: NextRequest) {
   const page = parseInt(searchParams.get('page') || '1')
   const limit = parseInt(searchParams.get('limit') || '20')
 
-  const where: any = { isPublished: true }
+  const where: any = {
+    isPublished: true,
+    createdBy: { universityId: session.user.universityId },
+  }
   if (difficulty) where.difficulty = difficulty
   if (search) where.title = { contains: search, mode: 'insensitive' }
   if (tag) where.tags = { some: { tag: { name: tag } } }
@@ -24,7 +48,7 @@ export async function GET(req: NextRequest) {
       where,
       include: {
         tags: { include: { tag: true } },
-        _count: { select: { submissions: true } },
+        createdBy: { select: { id: true, name: true } },
         submissions: {
           where: { userId: session.user.id, status: 'ACCEPTED' },
           select: { id: true },
@@ -41,16 +65,23 @@ export async function GET(req: NextRequest) {
   // Calculate acceptance rate
   const result = await Promise.all(
     problems.map(async (p) => {
-      const accepted = await prisma.submission.count({
-        where: { problemId: p.id, status: 'ACCEPTED' },
-      })
-      const total = p._count.submissions
+      const [accepted, total] = await Promise.all([
+        prisma.submission.count({
+          where: { problemId: p.id, status: 'ACCEPTED', user: { role: 'STUDENT' } },
+        }),
+        prisma.submission.count({
+          where: { problemId: p.id, user: { role: 'STUDENT' } },
+        }),
+      ])
       return {
         id: p.id,
         title: p.title,
         slug: p.slug,
         difficulty: p.difficulty,
         points: p.points,
+        createdBy: p.createdBy,
+        isCreatedByMe: p.createdBy.id === session.user.id,
+        canDelete: session.user.role === 'ADMIN' || (session.user.role === 'TEACHER' && p.createdBy.id === session.user.id),
         tags: p.tags.map((pt) => ({ id: pt.tag.id, name: pt.tag.name, color: pt.tag.color })),
         acceptanceRate: total > 0 ? Math.round((accepted / total) * 100) : 0,
         totalSubmissions: total,
@@ -67,19 +98,31 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
-  if (!session || !['ADMIN', 'TEACHER'].includes(session.user.role)) {
+  if (!session || session.user.role !== 'TEACHER') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
   try {
     const body = await req.json()
-    const { title, description, difficulty, points, timeLimit, memoryLimit, testCases, starterCode, constraints, examples, hints, tagIds } = body
+    const { title, description, difficulty, points, timeLimit, memoryLimit, testCases, starterCode, constraints, examples, hints, tagIds, isPublished } = body
 
-    const slug = title
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/[\s_-]+/g, '-')
-      .replace(/^-+|-+$/g, '')
+    if (!title?.trim() || !description?.trim() || !difficulty) {
+      return NextResponse.json({ error: 'Title, description and difficulty are required' }, { status: 400 })
+    }
+
+    if (!['EASY', 'MEDIUM', 'HARD'].includes(difficulty)) {
+      return NextResponse.json({ error: 'Invalid difficulty' }, { status: 400 })
+    }
+
+    const visibleTestCases = Array.isArray(testCases)
+      ? testCases.filter((tc: any) => tc?.input?.trim() && tc?.expectedOutput?.trim())
+      : []
+
+    if (visibleTestCases.length === 0) {
+      return NextResponse.json({ error: 'Add at least one complete test case' }, { status: 400 })
+    }
+
+    const slug = await createUniqueProblemSlug(title)
 
     const problem = await prisma.problem.create({
       data: {
@@ -90,13 +133,13 @@ export async function POST(req: NextRequest) {
         points: points || (difficulty === 'EASY' ? 10 : difficulty === 'MEDIUM' ? 20 : 40),
         timeLimit: timeLimit || 2000,
         memoryLimit: memoryLimit || 256,
-        testCases: testCases || [],
+        testCases: visibleTestCases,
         starterCode: starterCode || {},
         constraints,
         examples: examples || [],
         hints: hints || [],
         createdById: session.user.id,
-        isPublished: false,
+        isPublished: Boolean(isPublished),
         ...(tagIds?.length && {
           tags: { create: tagIds.map((tagId: string) => ({ tagId })) },
         }),

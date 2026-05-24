@@ -1,18 +1,27 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
-import { useParams } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useParams, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import {
   Play, ChevronDown, ChevronUp, Lightbulb, Clock, HardDrive,
-  CheckCircle2, XCircle, AlertCircle, Loader2, RotateCcw
+  CheckCircle2, XCircle, Loader2, RotateCcw, ArrowLeft, ArrowRight, Trophy, Flag
 } from 'lucide-react'
 import { DIFFICULTY_CONFIG, LANGUAGES, STATUS_CONFIG } from '@/types'
 import type { ProblemDetail, SubmissionResult, Language } from '@/types'
 
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false })
 
+type ContestProblemNav = {
+  id: string
+  title: string
+  slug: string
+}
+
 export default function ProblemPage() {
   const { id } = useParams<{ id: string }>()
+  const searchParams = useSearchParams()
+  const contestId = searchParams.get('contestId')
   const [problem, setProblem] = useState<ProblemDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [language, setLanguage] = useState<Language>('javascript')
@@ -21,6 +30,8 @@ export default function ProblemPage() {
   const [result, setResult] = useState<SubmissionResult | null>(null)
   const [activeTab, setActiveTab] = useState<'description' | 'submissions'>('description')
   const [showHints, setShowHints] = useState(false)
+  const [contestTitle, setContestTitle] = useState('')
+  const [contestProblems, setContestProblems] = useState<ContestProblemNav[]>([])
 
   useEffect(() => {
     fetch(`/api/problems/${id}`)
@@ -38,6 +49,32 @@ export default function ProblemPage() {
     }
   }, [language, problem])
 
+  useEffect(() => {
+    if (!contestId) {
+      setContestTitle('')
+      setContestProblems([])
+      return
+    }
+
+    fetch(`/api/contests/${contestId}`)
+      .then(r => r.json())
+      .then(data => {
+        const contest = data.data
+        setContestTitle(contest?.title || '')
+        setContestProblems(
+          (contest?.problems || []).map((cp: any) => ({
+            id: cp.problem.id,
+            title: cp.problem.title,
+            slug: cp.problem.slug,
+          }))
+        )
+      })
+      .catch(() => {
+        setContestTitle('')
+        setContestProblems([])
+      })
+  }, [contestId])
+
   async function handleSubmit() {
     if (!problem || !code.trim()) return
     setSubmitting(true)
@@ -46,10 +83,13 @@ export default function ProblemPage() {
     const res = await fetch('/api/submissions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, language, problemId: problem.id }),
+      body: JSON.stringify({ code, language, problemId: problem.id, contestId }),
     })
     const data = await res.json()
     setResult(data.data)
+    if (data.data?.status === 'ACCEPTED' && data.data?.pointsAwarded > 0) {
+      window.dispatchEvent(new Event('unicode-points-changed'))
+    }
     setSubmitting(false)
   }
 
@@ -66,6 +106,14 @@ export default function ProblemPage() {
   )
 
   const diff = DIFFICULTY_CONFIG[problem.difficulty as 'EASY' | 'MEDIUM' | 'HARD']
+  const contestProblemIndex = contestProblems.findIndex(p => p.id === problem.id || p.slug === problem.slug)
+  const previousContestProblem = contestProblemIndex > 0 ? contestProblems[contestProblemIndex - 1] : null
+  const nextContestProblem = contestProblemIndex >= 0 && contestProblemIndex < contestProblems.length - 1
+    ? contestProblems[contestProblemIndex + 1]
+    : null
+  const hasContestNavigation = contestProblems.length > 0 && contestProblemIndex >= 0
+  const contestHref = contestId ? `/contests/${contestId}` : ''
+  const contestProblemHref = (slug: string) => `/problems/${slug}?contestId=${contestId}`
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -74,12 +122,64 @@ export default function ProblemPage() {
         style={{ borderColor: 'var(--border)' }}>
         {/* Header */}
         <div className="px-6 py-5 sticky top-0 z-10" style={{ background: 'var(--bg-base)', borderBottom: '1px solid var(--border)' }}>
+          {contestId && (
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+              <Link href={contestHref}
+                className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg"
+                style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-secondary)', textDecoration: 'none' }}>
+                <Trophy size={13} /> Back to contest
+              </Link>
+
+              {hasContestNavigation && (
+                <div className="flex items-center gap-2">
+                  <span className="hidden sm:inline text-xs" style={{ color: 'var(--text-muted)' }}>
+                    {contestTitle ? `${contestTitle} - ` : ''}
+                    Problem {contestProblemIndex + 1} of {contestProblems.length}
+                  </span>
+
+                  {previousContestProblem ? (
+                    <Link href={contestProblemHref(previousContestProblem.slug)}
+                      className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg"
+                      style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-secondary)', textDecoration: 'none' }}>
+                      <ArrowLeft size={13} /> Previous
+                    </Link>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg"
+                      style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-muted)', opacity: 0.5 }}>
+                      <ArrowLeft size={13} /> Previous
+                    </span>
+                  )}
+
+                  {nextContestProblem ? (
+                    <Link href={contestProblemHref(nextContestProblem.slug)}
+                      className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg"
+                      style={{ background: 'var(--accent)', color: '#fff', textDecoration: 'none' }}>
+                      Next <ArrowRight size={13} />
+                    </Link>
+                  ) : (
+                    <Link href={contestHref}
+                      className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg"
+                      style={{ background: 'var(--accent)', color: '#fff', textDecoration: 'none' }}>
+                      <Flag size={13} /> Finish
+                    </Link>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="flex items-center gap-3 mb-2">
             <span className="text-xs font-medium px-2 py-0.5 rounded-md"
               style={{ color: diff.color, background: diff.bg }}>
               {diff.label}
             </span>
-            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{diff.points} pts</span>
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{problem.points} pts</span>
+            {problem.isCreatedByMe && (
+              <span className="text-xs px-2 py-0.5 rounded-md"
+                style={{ color: 'var(--accent)', background: 'var(--accent-dim)' }}>
+                Created by you
+              </span>
+            )}
             {problem.isSolved && (
               <span className="flex items-center gap-1 text-xs" style={{ color: 'var(--success)' }}>
                 <CheckCircle2 size={12} /> Solved
@@ -235,7 +335,7 @@ export default function ProblemPage() {
             }}
           >
             {submitting ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
-            {submitting ? 'Running…' : 'Submit'}
+            {submitting ? 'Running...' : 'Submit'}
           </button>
         </div>
 
@@ -350,7 +450,7 @@ function SubmissionsList({ problemId }: { problemId: string }) {
       .then(d => { setSubs(d.data || []); setLoading(false) })
   }, [problemId])
 
-  if (loading) return <div className="text-center py-8" style={{ color: 'var(--text-muted)' }}>Loading…</div>
+  if (loading) return <div className="text-center py-8" style={{ color: 'var(--text-muted)' }}>Loading...</div>
   if (subs.length === 0) return <div className="text-center py-8" style={{ color: 'var(--text-muted)' }}>No submissions yet</div>
 
   return (
