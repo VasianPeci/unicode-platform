@@ -31,7 +31,7 @@ type Props = {
       difficulty: Difficulty
     }
   }>
-  problemStats: any[]
+  solvedProblemCount: number
   upcomingContest: any
   createdProblemCount: number
   createdContestCount: number
@@ -42,16 +42,13 @@ export default function DashboardClient({
   session,
   currentTotalPoints,
   recentSubmissions,
-  problemStats,
+  solvedProblemCount,
   upcomingContest,
   createdProblemCount,
   createdContestCount,
   submissionCount,
 }: Props) {
   const [livePoints, setLivePoints] = useState(currentTotalPoints)
-  const solved =
-    problemStats.find((s) => s.status === 'ACCEPTED')?._count || 0
-
   const isStudent = session.user.role === 'STUDENT'
 
   useEffect(() => {
@@ -90,8 +87,8 @@ export default function DashboardClient({
       color: 'var(--accent)',
     },
     {
-      label: pluralize(solved, 'Problem Solved', 'Problems Solved'),
-      value: solved,
+      label: pluralize(solvedProblemCount, 'Problem Solved', 'Problems Solved'),
+      value: solvedProblemCount,
       icon: CheckCircle2,
       color: 'var(--success)',
     },

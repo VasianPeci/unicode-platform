@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Users, Star, CheckCircle2, Trash2 } from 'lucide-react'
-import { generateAvatar, formatDate } from '@/lib/utils'
+import { Users, Star, CheckCircle2, Trash2, UserCheck, Loader2 } from 'lucide-react'
+import { generateAvatar } from '@/lib/utils'
 
 type Props = {
   session: any
@@ -13,6 +13,34 @@ export default function StudentsClient({ session, students: initial }: Props) {
   const [students, setStudents] = useState(initial)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
+  const [approvingId, setApprovingId] = useState<string | null>(null)
+
+  const pendingCount = students.filter(s => s.emailVerifiedAt && !s.isActive).length
+
+  function sortStudents(list: any[]) {
+    return [...list].sort((a, b) => {
+      const aPending = Boolean(a.emailVerifiedAt && !a.isActive)
+      const bPending = Boolean(b.emailVerifiedAt && !b.isActive)
+      if (aPending !== bPending) return aPending ? -1 : 1
+      return b.totalPoints - a.totalPoints
+    })
+  }
+
+  async function handleApprove(id: string) {
+    setApprovingId(id)
+    try {
+      const res = await fetch(`/api/users/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'approve' }),
+      })
+      if (res.ok) {
+        setStudents(prev => sortStudents(prev.map(s => s.id === id ? { ...s, isActive: true } : s)))
+      }
+    } finally {
+      setApprovingId(null)
+    }
+  }
 
   async function handleDelete(id: string) {
     setDeletingId(id)
@@ -38,6 +66,7 @@ export default function StudentsClient({ session, students: initial }: Props) {
         </h1>
         <p style={{ color: 'var(--text-secondary)' }}>
           {students.length} enrolled students
+          {pendingCount > 0 && ` - ${pendingCount} pending approval`}
         </p>
       </div>
 
@@ -58,13 +87,16 @@ export default function StudentsClient({ session, students: initial }: Props) {
 
         {/* ROWS */}
         <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
-          {students.map((s, i) => (
-            <div
-              key={s.id}
-              className="grid grid-cols-12 gap-4 px-6 py-4 items-center transition-all"
-              onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-elevated)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-            >
+          {students.map((s, i) => {
+            const pendingApproval = Boolean(s.emailVerifiedAt && !s.isActive)
+
+            return (
+              <div
+                key={s.id}
+                className="grid grid-cols-12 gap-4 px-6 py-4 items-center transition-all"
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-elevated)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              >
               {/* STUDENT */}
               <div className="col-span-4 flex items-center gap-3">
                 <div className="relative">
@@ -82,8 +114,8 @@ export default function StudentsClient({ session, students: initial }: Props) {
                 </div>
                 <div>
                   <p className="text-sm font-medium">{s.name}</p>
-                  <p className="text-xs" style={{ color: s.isActive ? 'var(--success)' : 'var(--danger)' }}>
-                    {s.isActive ? 'Active' : 'Inactive'}
+                  <p className="text-xs" style={{ color: s.isActive ? 'var(--success)' : pendingApproval ? '#f59e0b' : 'var(--danger)' }}>
+                    {s.isActive ? 'Active' : pendingApproval ? 'Pending approval' : 'Email not confirmed'}
                   </p>
                 </div>
               </div>
@@ -108,7 +140,18 @@ export default function StudentsClient({ session, students: initial }: Props) {
               </div>
 
               {/* DELETE */}
-              <div className="col-span-1 flex justify-end">
+              <div className="col-span-1 flex justify-end gap-1">
+                {pendingApproval && (
+                  <button
+                    onClick={() => handleApprove(s.id)}
+                    disabled={approvingId === s.id}
+                    className="p-1.5 rounded-lg transition-all"
+                    style={{ background: 'rgba(52,211,153,0.1)', border: 'none', color: 'var(--success)', cursor: approvingId === s.id ? 'not-allowed' : 'pointer' }}
+                    title="Approve registration"
+                  >
+                    {approvingId === s.id ? <Loader2 size={15} className="animate-spin" /> : <UserCheck size={15} />}
+                  </button>
+                )}
                 {confirmId === s.id ? (
                   <div className="flex items-center gap-2">
                     <button
@@ -147,7 +190,8 @@ export default function StudentsClient({ session, students: initial }: Props) {
                 )}
               </div>
             </div>
-          ))}
+            )
+          })}
 
           {students.length === 0 && (
             <div className="px-6 py-12 text-center" style={{ color: 'var(--text-muted)' }}>

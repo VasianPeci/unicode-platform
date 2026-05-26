@@ -4,17 +4,16 @@ import Link from 'next/link'
 import {
   Users,
   GraduationCap,
-  BookOpen,
   Trophy,
-  Plus,
   ShieldCheck,
+  UserCheck,
 } from 'lucide-react'
 
 type Props = {
   session: any
   teacherCount: number
   studentCount: number
-  problemCount: number
+  pendingCount: number
   contestCount: number
 }
 
@@ -22,7 +21,7 @@ export default function AdminClient({
   session,
   teacherCount,
   studentCount,
-  problemCount,
+  pendingCount,
   contestCount,
 }: Props) {
   const stats = [
@@ -41,11 +40,11 @@ export default function AdminClient({
       color: '#38bdf8',
     },
     {
-      label: `Problem${problemCount == 1 ? '' : 's'}`,
-      value: problemCount,
-      icon: BookOpen,
-      href: '/problems',
-      color: 'var(--success)',
+      label: 'Pending',
+      value: pendingCount,
+      icon: UserCheck,
+      href: pendingCount > 0 ? '/admin/teachers' : '/admin/students',
+      color: '#f59e0b',
     },
     {
       label: `Contest${contestCount == 1 ? '' : 's'}`,
@@ -96,7 +95,7 @@ export default function AdminClient({
 
           {/* QUICK ACTIONS */}
           <div className="glass rounded-2xl p-6">
-            <h2 className="font-semibold mb-4">Quick actions</h2>
+            <h2 className="font-semibold mb-4">Approvals</h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Link
@@ -109,9 +108,8 @@ export default function AdminClient({
               >
                 <GraduationCap size={18} style={{ color: 'var(--accent)' }} />
                 <span className="text-sm font-medium">
-                  Manage teachers
+                  Review teachers
                 </span>
-                <Plus size={16} className="ml-auto text-muted" />
               </Link>
 
               <Link
@@ -123,8 +121,7 @@ export default function AdminClient({
                 }}
               >
                 <Users size={18} style={{ color: 'var(--accent)' }} />
-                <span className="text-sm font-medium">Manage students</span>
-                <Plus size={16} className="ml-auto text-muted" />
+                <span className="text-sm font-medium">Review students</span>
               </Link>
             </div>
           </div>

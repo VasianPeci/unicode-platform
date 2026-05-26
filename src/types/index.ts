@@ -68,6 +68,16 @@ export interface SubmissionResult {
   testResults?: TestResult[]
   errorMsg?: string | null
   pointsAwarded: number
+  contestPointsAwarded?: number
+  aiComplexityStatus?: 'REVIEWED' | 'UNAVAILABLE' | 'FAILED' | null
+  aiTimeComplexity?: string | null
+  aiSpaceComplexity?: string | null
+  aiComplexityScore?: number | null
+  aiComplexityBonus?: number
+  aiComplexityBonusAwarded?: number
+  contestAiComplexityBonusAwarded?: number
+  aiComplexityFeedback?: string | null
+  aiComplexityModel?: string | null
   submittedAt: string
 }
 

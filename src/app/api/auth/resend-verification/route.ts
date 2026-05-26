@@ -16,14 +16,14 @@ export async function POST(req: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },
-      select: { id: true, email: true, isActive: true },
+      select: { id: true, email: true, isActive: true, emailVerifiedAt: true },
     })
 
     if (!user) {
       return NextResponse.json({ error: 'No pending registration was found for this email.' }, { status: 404 })
     }
 
-    if (user.isActive) {
+    if (user.emailVerifiedAt || user.isActive) {
       return NextResponse.json({ error: 'This email is already confirmed.' }, { status: 400 })
     }
 

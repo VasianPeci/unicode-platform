@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { judgeSubmission } from '@/lib/judge'
+import { judgeComplexityWithAi } from '@/lib/aiComplexity'
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -19,7 +20,15 @@ export async function POST(req: NextRequest) {
 
     const problem = await prisma.problem.findFirst({
       where: { id: problemId, isPublished: true },
-      select: { testCases: true, timeLimit: true, memoryLimit: true, points: true },
+      select: {
+        title: true,
+        description: true,
+        constraints: true,
+        testCases: true,
+        timeLimit: true,
+        memoryLimit: true,
+        points: true,
+      },
     })
 
     if (!problem) return NextResponse.json({ error: 'Problem not found' }, { status: 404 })
@@ -90,44 +99,100 @@ export async function POST(req: NextRequest) {
       problem.memoryLimit
     )
 
+    const aiComplexity = await judgeComplexityWithAi({
+      code,
+      language,
+      correctnessStatus: result.status,
+      problem: {
+        title: problem.title,
+        description: problem.description,
+        constraints: problem.constraints,
+        timeLimit: problem.timeLimit,
+        memoryLimit: problem.memoryLimit,
+      },
+    })
+
     // Check if this is the first accepted submission for points
     let pointsAwarded = 0
+    let aiComplexityBonusAwarded = 0
+    let contestPointsAwarded = 0
+    let contestAiComplexityBonusAwarded = 0
+
     if (result.status === 'ACCEPTED') {
-      const previousAccepted = await prisma.submission.findFirst({
-        where: {
-          userId: session.user.id,
-          problemId,
-          status: 'ACCEPTED',
-          id: { not: submission.id },
-        },
-      })
-
-      if (isStudent && !previousAccepted) {
-        pointsAwarded = problem.points
-        await prisma.user.update({
-          where: { id: session.user.id },
-          data: { totalPoints: { increment: pointsAwarded } },
-        })
-      }
-
-      if (isStudent && activeContestId) {
-        const previousContestAccepted = await prisma.submission.findFirst({
+      const [previousAccepted, previousBestComplexity] = await Promise.all([
+        prisma.submission.findFirst({
           where: {
             userId: session.user.id,
             problemId,
-            contestId: activeContestId,
             status: 'ACCEPTED',
             id: { not: submission.id },
           },
-        })
+        }),
+        prisma.submission.aggregate({
+          where: {
+            userId: session.user.id,
+            problemId,
+            status: 'ACCEPTED',
+            id: { not: submission.id },
+          },
+          _max: { aiComplexityBonus: true },
+        }),
+      ])
 
-        if (!previousContestAccepted) {
-          await prisma.contestParticipant.update({
-            where: { contestId_userId: { contestId: activeContestId, userId: session.user.id } },
-            data: { score: { increment: contestPointValue } },
+      if (isStudent) {
+        const basePointsAwarded = previousAccepted ? 0 : problem.points
+        const previousBestBonus = previousBestComplexity._max.aiComplexityBonus ?? 0
+        aiComplexityBonusAwarded = Math.max(0, aiComplexity.bonusPoints - previousBestBonus)
+        pointsAwarded = basePointsAwarded + aiComplexityBonusAwarded
+
+        if (pointsAwarded > 0) {
+          await prisma.user.update({
+            where: { id: session.user.id },
+            data: { totalPoints: { increment: pointsAwarded } },
           })
         }
       }
+
+      if (isStudent && activeContestId) {
+        const [previousContestAccepted, previousContestBestComplexity] = await Promise.all([
+          prisma.submission.findFirst({
+            where: {
+              userId: session.user.id,
+              problemId,
+              contestId: activeContestId,
+              status: 'ACCEPTED',
+              id: { not: submission.id },
+            },
+          }),
+          prisma.submission.aggregate({
+            where: {
+              userId: session.user.id,
+              problemId,
+              contestId: activeContestId,
+              status: 'ACCEPTED',
+              id: { not: submission.id },
+            },
+            _max: { aiComplexityBonus: true },
+          }),
+        ])
+
+        const contestBasePointsAwarded = previousContestAccepted ? 0 : contestPointValue
+        const previousContestBestBonus = previousContestBestComplexity._max.aiComplexityBonus ?? 0
+        contestAiComplexityBonusAwarded = Math.max(0, aiComplexity.bonusPoints - previousContestBestBonus)
+        contestPointsAwarded = contestBasePointsAwarded + contestAiComplexityBonusAwarded
+
+        if (contestPointsAwarded > 0) {
+          await prisma.contestParticipant.update({
+            where: { contestId_userId: { contestId: activeContestId, userId: session.user.id } },
+            data: { score: { increment: contestPointsAwarded } },
+          })
+        }
+      }
+    }
+
+    if (result.status !== 'ACCEPTED') {
+      aiComplexityBonusAwarded = 0
+      contestAiComplexityBonusAwarded = 0
     }
 
     // Update submission with results
@@ -140,6 +205,14 @@ export async function POST(req: NextRequest) {
         testResults: result.testResults as any,
         errorMsg: result.errorMsg,
         pointsAwarded,
+        aiComplexityStatus: aiComplexity.status,
+        aiTimeComplexity: aiComplexity.timeComplexity,
+        aiSpaceComplexity: aiComplexity.spaceComplexity,
+        aiComplexityScore: aiComplexity.score,
+        aiComplexityBonus: aiComplexity.bonusPoints,
+        aiComplexityBonusAwarded,
+        aiComplexityFeedback: aiComplexity.feedback,
+        aiComplexityModel: aiComplexity.model,
       },
     })
 
@@ -152,6 +225,16 @@ export async function POST(req: NextRequest) {
         testResults: updated.testResults,
         errorMsg: updated.errorMsg,
         pointsAwarded: updated.pointsAwarded,
+        contestPointsAwarded,
+        aiComplexityStatus: updated.aiComplexityStatus,
+        aiTimeComplexity: updated.aiTimeComplexity,
+        aiSpaceComplexity: updated.aiSpaceComplexity,
+        aiComplexityScore: updated.aiComplexityScore,
+        aiComplexityBonus: updated.aiComplexityBonus,
+        aiComplexityBonusAwarded: updated.aiComplexityBonusAwarded,
+        contestAiComplexityBonusAwarded,
+        aiComplexityFeedback: updated.aiComplexityFeedback,
+        aiComplexityModel: updated.aiComplexityModel,
         submittedAt: updated.submittedAt,
       },
     })
@@ -190,6 +273,14 @@ export async function GET(req: NextRequest) {
       runtimeMs: true,
       memoryKb: true,
       pointsAwarded: true,
+      aiComplexityStatus: true,
+      aiTimeComplexity: true,
+      aiSpaceComplexity: true,
+      aiComplexityScore: true,
+      aiComplexityBonus: true,
+      aiComplexityBonusAwarded: true,
+      aiComplexityFeedback: true,
+      aiComplexityModel: true,
       submittedAt: true,
       problem: { select: { title: true, slug: true } },
     },

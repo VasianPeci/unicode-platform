@@ -15,20 +15,24 @@ export async function POST(req: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },
-      select: { email: true, isActive: true },
+      select: { email: true, role: true, isActive: true, emailVerifiedAt: true },
     })
 
     if (!user) {
-      return NextResponse.json({ data: { registered: false, verified: false } })
+      return NextResponse.json({ data: { registered: false, verified: false, approved: false, pendingApproval: false } })
     }
 
-    const verification = user.isActive ? null : await getLatestVerification(normalizedEmail)
+    const verified = Boolean(user.emailVerifiedAt || user.isActive)
+    const verification = verified ? null : await getLatestVerification(normalizedEmail)
 
     return NextResponse.json({
       data: {
         registered: true,
-        verified: user.isActive,
+        verified,
+        approved: user.isActive,
+        pendingApproval: verified && !user.isActive,
         email: user.email,
+        role: user.role,
         expiresAt: verification?.expiresAt || null,
       },
     })

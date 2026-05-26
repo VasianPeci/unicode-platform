@@ -24,6 +24,7 @@ export default async function StudentsPage() {
       totalPoints: true,
       createdAt: true,
       isActive: true,
+      emailVerifiedAt: true,
       _count: {
         select: {
           submissions: { where: { status: 'ACCEPTED' } },
@@ -31,8 +32,14 @@ export default async function StudentsPage() {
       },
     },
   })
+  const orderedStudents = students.sort((a, b) => {
+    const aPending = Boolean(a.emailVerifiedAt && !a.isActive)
+    const bPending = Boolean(b.emailVerifiedAt && !b.isActive)
+    if (aPending !== bPending) return aPending ? -1 : 1
+    return b.totalPoints - a.totalPoints
+  })
 
   return (
-    <StudentsClient session={session} students={students} />
+    <StudentsClient session={session} students={orderedStudents} />
   )
 }

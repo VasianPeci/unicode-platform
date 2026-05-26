@@ -48,6 +48,8 @@ export default function LoginPage() {
       if (status?.registered && !status?.verified) {
         setUnverifiedEmail(status.email || email)
         setError('This email is not properly registered. Confirm the email or send a new code.')
+      } else if (status?.registered && status?.pendingApproval) {
+        setError('Your email is confirmed. An admin must approve your account before you can sign in.')
       } else {
         setError('Invalid email or password.')
       }
@@ -108,7 +110,10 @@ export default function LoginPage() {
     })
 
     if (signInRes?.error) {
-      setNotice('Email confirmed. Sign in with your password to continue.')
+      const status = await checkRegistrationStatus(unverifiedEmail || email)
+      setNotice(status?.pendingApproval
+        ? 'Email confirmed. Your account is pending admin approval.'
+        : 'Email confirmed. Sign in with your password to continue.')
       setUnverifiedEmail('')
       setVerifying(false)
       return

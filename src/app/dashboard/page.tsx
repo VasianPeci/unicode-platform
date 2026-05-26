@@ -10,7 +10,7 @@ export default async function DashboardPage() {
   if (!session) redirect('/auth/login')
   if (session.user.role === 'ADMIN') redirect('/admin')
 
-  const [recentSubmissions, problemStats, currentUser, upcomingContest, createdProblemCount, createdContestCount, submissionCount] =
+  const [recentSubmissions, solvedProblems, currentUser, upcomingContest, createdProblemCount, createdContestCount, submissionCount] =
     await Promise.all([
       prisma.submission.findMany({
         where: { userId: session.user.id },
@@ -23,10 +23,13 @@ export default async function DashboardPage() {
         },
       }),
 
-      prisma.submission.groupBy({
-        by: ['status'],
-        where: { userId: session.user.id },
-        _count: true,
+      prisma.submission.findMany({
+        where: {
+          userId: session.user.id,
+          status: 'ACCEPTED',
+        },
+        distinct: ['problemId'],
+        select: { problemId: true },
       }),
 
       prisma.user.findUnique({
@@ -80,7 +83,7 @@ export default async function DashboardPage() {
       session={session as any}
       currentTotalPoints={currentUser?.totalPoints ?? session.user.totalPoints}
       recentSubmissions={formattedSubmissions}
-      problemStats={problemStats}
+      solvedProblemCount={solvedProblems.length}
       upcomingContest={formattedContest}
       createdProblemCount={createdProblemCount}
       createdContestCount={createdContestCount}

@@ -30,8 +30,12 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Invalid credentials')
         }
 
-        if (!user.isActive) {
+        if (!user.emailVerifiedAt && !user.isActive) {
           throw new Error('EMAIL_NOT_VERIFIED')
+        }
+
+        if (!user.isActive) {
+          throw new Error('ACCOUNT_PENDING_APPROVAL')
         }
 
         const isValid = await bcrypt.compare(credentials.password, user.passwordHash)

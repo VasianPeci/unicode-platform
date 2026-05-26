@@ -21,7 +21,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid confirmation code.' }, { status: 400 })
     }
 
-    return NextResponse.json({ message: 'Email confirmed. Registration complete.' })
+    return NextResponse.json({
+      data: {
+        email: result.email,
+        role: result.role,
+        approved: result.approved,
+        pendingApproval: !result.approved,
+      },
+      message: result.approved
+        ? 'Email confirmed. Registration complete.'
+        : 'Email confirmed. Your account is pending admin approval.',
+    })
   } catch (error: any) {
     if (error.name === 'ZodError') {
       return NextResponse.json({ error: 'Enter the 6-digit confirmation code.' }, { status: 400 })

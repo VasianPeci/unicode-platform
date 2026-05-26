@@ -5,7 +5,7 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import {
   Play, ChevronDown, ChevronUp, Lightbulb, Clock, HardDrive,
-  CheckCircle2, XCircle, Loader2, RotateCcw, ArrowLeft, ArrowRight, Trophy, Flag
+  CheckCircle2, XCircle, Loader2, RotateCcw, ArrowLeft, ArrowRight, Trophy, Flag, Sparkles
 } from 'lucide-react'
 import { DIFFICULTY_CONFIG, LANGUAGES, STATUS_CONFIG } from '@/types'
 import type { ProblemDetail, SubmissionResult, Language } from '@/types'
@@ -335,7 +335,7 @@ export default function ProblemPage() {
             }}
           >
             {submitting ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
-            {submitting ? 'Running...' : 'Submit'}
+            {submitting ? 'Reviewing...' : 'Submit'}
           </button>
         </div>
 
@@ -365,7 +365,7 @@ export default function ProblemPage() {
 
         {/* Result panel */}
         {result && (
-          <div className="flex-shrink-0 border-t overflow-y-auto max-h-64"
+          <div className="flex-shrink-0 border-t overflow-y-auto max-h-80"
             style={{ borderColor: 'var(--border)', background: 'var(--bg-surface)' }}>
             <SubmissionResultPanel result={result} />
           </div>
@@ -395,6 +395,12 @@ function SubmissionResultPanel({ result }: { result: SubmissionResult }) {
             +{result.pointsAwarded} pts
           </span>
         )}
+        {accepted && (result.contestPointsAwarded || 0) > 0 && result.contestPointsAwarded !== result.pointsAwarded && (
+          <span className="text-sm px-2 py-0.5 rounded-md font-medium"
+            style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}>
+            +{result.contestPointsAwarded} contest pts
+          </span>
+        )}
         {result.runtimeMs && (
           <span className="ml-auto text-xs flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
             <Clock size={12} /> {result.runtimeMs}ms
@@ -412,6 +418,10 @@ function SubmissionResultPanel({ result }: { result: SubmissionResult }) {
           style={{ background: 'rgba(248,113,113,0.08)', color: 'var(--danger)', border: '1px solid rgba(248,113,113,0.2)' }}>
           {result.errorMsg}
         </pre>
+      )}
+
+      {result.aiComplexityFeedback && (
+        <AiComplexityPanel result={result} accepted={accepted} />
       )}
 
       {result.testResults && (
@@ -440,6 +450,65 @@ function SubmissionResultPanel({ result }: { result: SubmissionResult }) {
   )
 }
 
+function AiComplexityPanel({ result, accepted }: { result: SubmissionResult; accepted: boolean }) {
+  const reviewed = result.aiComplexityStatus === 'REVIEWED'
+  const bonusAwarded = result.aiComplexityBonusAwarded || 0
+  const contestBonusAwarded = result.contestAiComplexityBonusAwarded || 0
+  const assessedBonus = result.aiComplexityBonus || 0
+  const scoreLabel = typeof result.aiComplexityScore === 'number' ? `${result.aiComplexityScore}/10` : 'No score'
+  const bonusMessage = accepted
+    ? bonusAwarded > 0
+      ? `+${bonusAwarded} complexity bonus awarded`
+      : assessedBonus > 0
+        ? 'Complexity bonus matched your previous best'
+        : 'No complexity bonus awarded'
+    : assessedBonus > 0
+      ? `Potential +${assessedBonus} after an accepted solution`
+      : 'Bonus applies to accepted solutions'
+
+  return (
+    <div className="rounded-xl p-3 mb-4 text-xs"
+      style={{
+        background: reviewed ? 'rgba(99,102,241,0.08)' : 'rgba(148,163,184,0.08)',
+        border: `1px solid ${reviewed ? 'rgba(99,102,241,0.22)' : 'rgba(148,163,184,0.18)'}`,
+      }}>
+      <div className="flex items-center gap-2 mb-2 flex-wrap">
+        <Sparkles size={13} style={{ color: reviewed ? 'var(--accent)' : 'var(--text-muted)' }} />
+        <span className="font-semibold" style={{ color: reviewed ? 'var(--accent)' : 'var(--text-secondary)' }}>
+          AI Complexity Review
+        </span>
+        <span className="px-2 py-0.5 rounded-md"
+          style={{ background: 'var(--bg-elevated)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
+          {scoreLabel}
+        </span>
+        <span className="px-2 py-0.5 rounded-md"
+          style={{ background: bonusAwarded > 0 ? 'rgba(52,211,153,0.1)' : 'var(--bg-elevated)', color: bonusAwarded > 0 ? 'var(--success)' : 'var(--text-muted)', border: '1px solid var(--border)' }}>
+          {bonusMessage}
+        </span>
+        {contestBonusAwarded > 0 && contestBonusAwarded !== bonusAwarded && (
+          <span className="px-2 py-0.5 rounded-md"
+            style={{ background: 'var(--accent-dim)', color: 'var(--accent)', border: '1px solid var(--border-accent)' }}>
+            +{contestBonusAwarded} contest complexity
+          </span>
+        )}
+      </div>
+
+      {(result.aiTimeComplexity || result.aiSpaceComplexity) && (
+        <div className="grid grid-cols-2 gap-2 mb-2">
+          <div style={{ color: 'var(--text-muted)' }}>
+            Time: <span style={{ color: 'var(--text-secondary)' }}>{result.aiTimeComplexity || 'Unknown'}</span>
+          </div>
+          <div style={{ color: 'var(--text-muted)' }}>
+            Space: <span style={{ color: 'var(--text-secondary)' }}>{result.aiSpaceComplexity || 'Unknown'}</span>
+          </div>
+        </div>
+      )}
+
+      <p style={{ color: 'var(--text-secondary)' }}>{result.aiComplexityFeedback}</p>
+    </div>
+  )
+}
+
 function SubmissionsList({ problemId }: { problemId: string }) {
   const [subs, setSubs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -463,6 +532,16 @@ function SubmissionsList({ problemId }: { problemId: string }) {
             <span style={{ color: status.color }}>{status.label}</span>
             <span style={{ color: 'var(--text-muted)' }} className="text-xs">{sub.language}</span>
             {sub.runtimeMs && <span style={{ color: 'var(--text-muted)' }} className="text-xs">{sub.runtimeMs}ms</span>}
+            {typeof sub.aiComplexityScore === 'number' && (
+              <span style={{ color: 'var(--accent)' }} className="text-xs">
+                AI {sub.aiComplexityScore}/10
+              </span>
+            )}
+            {sub.aiComplexityBonusAwarded > 0 && (
+              <span style={{ color: 'var(--success)' }} className="text-xs">
+                +{sub.aiComplexityBonusAwarded} bonus
+              </span>
+            )}
             <span style={{ color: 'var(--text-muted)' }} className="text-xs ml-auto">
               {new Date(sub.submittedAt).toLocaleDateString()}
             </span>

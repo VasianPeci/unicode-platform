@@ -93,6 +93,17 @@ export async function verifyEmailCode(email: string, code: string) {
     return { ok: false as const, reason: 'invalid' as const, userId: verification.userId }
   }
 
+  const user = await prisma.user.findUnique({
+    where: { id: verification.userId },
+    select: { id: true, email: true, role: true, isActive: true },
+  })
+
+  if (!user) {
+    return { ok: false as const, reason: 'invalid' as const, userId: verification.userId }
+  }
+
+  const shouldActivate = user.role === 'ADMIN' || user.isActive
+
   await prisma.$transaction([
     prisma.$executeRaw`
       UPDATE "email_verifications"
@@ -101,10 +112,16 @@ export async function verifyEmailCode(email: string, code: string) {
     `,
     prisma.$executeRaw`
       UPDATE "users"
-      SET "isActive" = TRUE, "updatedAt" = NOW()
+      SET "emailVerifiedAt" = NOW(), "isActive" = ${shouldActivate}, "updatedAt" = NOW()
       WHERE "id" = ${verification.userId}
     `,
   ])
 
-  return { ok: true as const, userId: verification.userId }
+  return {
+    ok: true as const,
+    userId: verification.userId,
+    email: user.email,
+    role: user.role,
+    approved: shouldActivate,
+  }
 }

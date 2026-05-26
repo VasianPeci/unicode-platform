@@ -221,7 +221,7 @@ export function Sidebar() {
                 {session.user.name}
               </p>
               <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
-                {role === 'STUDENT' ? `${roleLabel} - ${formatCount(points, 'point')}` : `${roleLabel} - Unranked`}
+                {role === 'STUDENT' ? `${roleLabel} - ${formatCount(points, 'point')}` : roleLabel}
               </p>
             </div>
           )}

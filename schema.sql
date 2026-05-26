@@ -154,6 +154,14 @@ CREATE TABLE IF NOT EXISTS "public"."submissions" (
     "testResults" "jsonb",
     "errorMsg" "text",
     "pointsAwarded" integer DEFAULT 0 NOT NULL,
+    "aiComplexityStatus" "text" DEFAULT 'UNAVAILABLE'::"text",
+    "aiTimeComplexity" "text",
+    "aiSpaceComplexity" "text",
+    "aiComplexityScore" integer,
+    "aiComplexityBonus" integer DEFAULT 0 NOT NULL,
+    "aiComplexityBonusAwarded" integer DEFAULT 0 NOT NULL,
+    "aiComplexityFeedback" "text",
+    "aiComplexityModel" "text",
     "submittedAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     "userId" "text" NOT NULL,
     "problemId" "text" NOT NULL,
@@ -197,6 +205,7 @@ CREATE TABLE IF NOT EXISTS "public"."users" (
     "totalPoints" integer DEFAULT 0 NOT NULL,
     "avatarUrl" "text",
     "isActive" boolean DEFAULT true NOT NULL,
+    "emailVerifiedAt" timestamp(3) without time zone,
     "createdAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     "updatedAt" timestamp(3) without time zone NOT NULL,
     "universityId" "text" NOT NULL
@@ -452,8 +461,6 @@ ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TAB
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "anon";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "authenticated";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "service_role";
-
-
 
 
 

@@ -102,6 +102,22 @@ JUDGE0_TOKEN=your_rapidapi_key
 
 ---
 
+## Setting Up AI Complexity Bonuses
+
+Submissions are also reviewed by an external AI complexity judge immediately after the normal correctness judge finishes. The platform uses OpenRouter's free model router by default and awards configurable bonus points for better time and space complexity.
+
+Add to `.env`:
+```
+OPENROUTER_API_KEY=your_openrouter_key
+OPENROUTER_MODEL=openrouter/free
+AI_COMPLEXITY_MAX_BONUS=5
+AI_COMPLEXITY_TIMEOUT_MS=15000
+```
+
+Run `npm run db:push` after pulling this schema change so the new AI review columns exist on `submissions`.
+
+---
+
 ## Project Structure
 
 ```
@@ -185,6 +201,7 @@ prisma/
 ### Auth
 - `POST /api/auth/register` — create student account
 - `POST /api/auth/[...nextauth]` — NextAuth (login/session)
+- `POST /api/auth/verify-email` — confirm registration email code
 
 ### Problems
 - `GET /api/problems` — list (supports `?difficulty=`, `?search=`, `?tag=`)
@@ -205,4 +222,4 @@ prisma/
 - `GET /api/leaderboard` — university ranking
 
 ### Users
-- `POST /api/users/create-teacher` — create teacher account (ADMIN only)
+- `PATCH /api/users/[id]` — approve pending student/teacher registration (ADMIN only)

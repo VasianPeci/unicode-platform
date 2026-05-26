@@ -10,7 +10,7 @@ export default async function AdminPage() {
   if (!session) redirect('/auth/login')
   if (session.user.role !== 'ADMIN') redirect('/dashboard')
 
-  const [teacherCount, studentCount, problemCount, contestCount] =
+  const [teacherCount, studentCount, pendingCount, contestCount] =
     await Promise.all([
       prisma.user.count({
         where: { universityId: session.user.universityId, role: 'TEACHER' },
@@ -18,8 +18,13 @@ export default async function AdminPage() {
       prisma.user.count({
         where: { universityId: session.user.universityId, role: 'STUDENT' },
       }),
-      prisma.problem.count({
-        where: { isPublished: true, createdBy: { universityId: session.user.universityId } },
+      prisma.user.count({
+        where: {
+          universityId: session.user.universityId,
+          role: { in: ['STUDENT', 'TEACHER'] },
+          isActive: false,
+          emailVerifiedAt: { not: null },
+        },
       }),
       prisma.contest.count({
         where: { createdBy: { universityId: session.user.universityId } },
@@ -31,7 +36,7 @@ export default async function AdminPage() {
       session={session}
       teacherCount={teacherCount}
       studentCount={studentCount}
-      problemCount={problemCount}
+      pendingCount={pendingCount}
       contestCount={contestCount}
     />
   )

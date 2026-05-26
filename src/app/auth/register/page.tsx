@@ -3,9 +3,10 @@ import { useEffect, useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { CheckCircle2, Code2, Loader2, Search } from 'lucide-react'
+import { Building2, CheckCircle2, Code2, Loader2, Search } from 'lucide-react'
 
 type RegisterRole = 'STUDENT' | 'TEACHER'
+type RegisterMode = 'EXISTING_UNIVERSITY' | 'NEW_UNIVERSITY'
 
 type UniversityOption = {
   id: string
@@ -22,7 +23,10 @@ export default function RegisterPage() {
     confirm: '',
     role: 'STUDENT' as RegisterRole,
     universityId: '',
+    universityName: '',
+    universityDomain: '',
   })
+  const [registerMode, setRegisterMode] = useState<RegisterMode>('EXISTING_UNIVERSITY')
   const [universitySearch, setUniversitySearch] = useState('')
   const [universities, setUniversities] = useState<UniversityOption[]>([])
   const [loadingUniversities, setLoadingUniversities] = useState(false)
@@ -34,6 +38,7 @@ export default function RegisterPage() {
   const [notice, setNotice] = useState('')
   const [verificationEmail, setVerificationEmail] = useState('')
   const [success, setSuccess] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
 
   useEffect(() => {
     const controller = new AbortController()
@@ -52,7 +57,7 @@ export default function RegisterPage() {
 
   const selectedUniversity = universities.find(university => university.id === form.universityId)
 
-  const setText = (field: 'name' | 'email' | 'password' | 'confirm') => (e: React.ChangeEvent<HTMLInputElement>) =>
+  const setText = (field: 'name' | 'email' | 'password' | 'confirm' | 'universityName' | 'universityDomain') => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm(current => ({ ...current, [field]: e.target.value }))
 
   async function handleSubmit(e: React.FormEvent) {
@@ -61,8 +66,12 @@ export default function RegisterPage() {
       setError('Passwords do not match.')
       return
     }
-    if (!form.universityId) {
+    if (registerMode === 'EXISTING_UNIVERSITY' && !form.universityId) {
       setError('Choose your university.')
+      return
+    }
+    if (registerMode === 'NEW_UNIVERSITY' && (!form.universityName.trim() || !form.universityDomain.trim())) {
+      setError('Enter the university name and domain.')
       return
     }
 
@@ -78,7 +87,10 @@ export default function RegisterPage() {
         email: form.email,
         password: form.password,
         role: form.role,
-        universityId: form.universityId,
+        registerNewUniversity: registerMode === 'NEW_UNIVERSITY',
+        universityId: registerMode === 'EXISTING_UNIVERSITY' ? form.universityId : undefined,
+        universityName: registerMode === 'NEW_UNIVERSITY' ? form.universityName : undefined,
+        universityDomain: registerMode === 'NEW_UNIVERSITY' ? form.universityDomain : undefined,
       }),
     })
     const data = await res.json()
@@ -114,13 +126,21 @@ export default function RegisterPage() {
     }
 
     setSuccess(true)
-    await signIn('credentials', {
-      email: verificationEmail,
-      password: form.password,
-      redirect: false,
-    })
-    router.push('/dashboard')
-    router.refresh()
+
+    if (data.data?.approved) {
+      setSuccessMessage('Email confirmed. Taking you to your dashboard...')
+      await signIn('credentials', {
+        email: verificationEmail,
+        password: form.password,
+        redirect: false,
+      })
+      router.push('/dashboard')
+      router.refresh()
+      return
+    }
+
+    setSuccessMessage('Email confirmed. Your account is pending admin approval.')
+    setVerifying(false)
   }
 
   async function handleResend() {
@@ -179,7 +199,9 @@ export default function RegisterPage() {
           <div className="p-6 rounded-xl text-center" style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)' }}>
             <CheckCircle2 size={28} className="mx-auto mb-3" style={{ color: 'var(--success)' }} />
             <p className="text-lg font-semibold" style={{ color: 'var(--success)' }}>Email confirmed</p>
-            <p className="text-sm mt-2" style={{ color: 'var(--text-secondary)' }}>Taking you to your dashboard...</p>
+            <p className="text-sm mt-2" style={{ color: 'var(--text-secondary)' }}>
+              {successMessage || 'Registration complete.'}
+            </p>
           </div>
         ) : verificationEmail ? (
           <form onSubmit={handleVerify} className="space-y-4">
@@ -271,6 +293,40 @@ export default function RegisterPage() {
             </div>
 
             <div>
+              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Registration type</label>
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  { value: 'EXISTING_UNIVERSITY', label: 'Join university' },
+                  { value: 'NEW_UNIVERSITY', label: 'New university' },
+                ] as const).map(option => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => {
+                      setRegisterMode(option.value)
+                      setError('')
+                      setForm(current => ({
+                        ...current,
+                        universityId: option.value === 'NEW_UNIVERSITY' ? '' : current.universityId,
+                      }))
+                    }}
+                    className="px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+                    style={{
+                      background: registerMode === option.value ? 'var(--accent)' : 'var(--bg-elevated)',
+                      border: `1px solid ${registerMode === option.value ? 'var(--accent)' : 'var(--border)'}`,
+                      color: registerMode === option.value ? '#fff' : 'var(--text-secondary)',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {registerMode === 'EXISTING_UNIVERSITY' ? (
+              <>
+                <div>
               <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Role</label>
               <select
                 value={form.role}
@@ -334,6 +390,45 @@ export default function RegisterPage() {
                 </p>
               )}
             </div>
+              </>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 p-4 rounded-xl text-sm"
+                  style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>
+                  <Building2 size={16} style={{ color: 'var(--accent)' }} />
+                  <span>You will become the admin for this university after confirming your email.</span>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>University name</label>
+                  <input
+                    type="text"
+                    value={form.universityName}
+                    onChange={setText('universityName')}
+                    required={registerMode === 'NEW_UNIVERSITY'}
+                    className={fieldClass}
+                    style={inputStyle}
+                    onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+                    onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>University domain</label>
+                  <input
+                    type="text"
+                    value={form.universityDomain}
+                    onChange={setText('universityDomain')}
+                    placeholder="university.edu"
+                    required={registerMode === 'NEW_UNIVERSITY'}
+                    className={fieldClass}
+                    style={inputStyle}
+                    onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+                    onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                  />
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Password</label>

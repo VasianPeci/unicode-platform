@@ -59,6 +59,7 @@ model User {
   totalPoints   Int        @default(0)
   avatarUrl     String?
   isActive      Boolean    @default(true)
+  emailVerifiedAt DateTime?
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 
@@ -155,6 +156,14 @@ model Submission {
   testResults Json?            // array of {passed, input, output, expected, time}
   errorMsg    String?          @db.Text
   pointsAwarded Int           @default(0)
+  aiComplexityStatus String?   @default("UNAVAILABLE")
+  aiTimeComplexity String?
+  aiSpaceComplexity String?
+  aiComplexityScore Int?
+  aiComplexityBonus Int        @default(0)
+  aiComplexityBonusAwarded Int @default(0)
+  aiComplexityFeedback String? @db.Text
+  aiComplexityModel String?
   submittedAt DateTime         @default(now())
 
   userId      String

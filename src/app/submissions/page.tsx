@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getServerSession } from 'next-auth'
-import { Code2, Clock } from 'lucide-react'
+import { Code2, Clock, Sparkles } from 'lucide-react'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { Sidebar } from '@/components/layout/Sidebar'
@@ -72,6 +72,17 @@ export default async function SubmissionsPage() {
                         <p className="text-sm font-medium truncate">
                           {submission.problem.title}
                         </p>
+                        {typeof submission.aiComplexityScore === 'number' && (
+                          <p className="mt-1 flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>
+                            <Sparkles size={11} style={{ color: 'var(--accent)' }} />
+                            AI {submission.aiComplexityScore}/10
+                            {submission.aiComplexityBonusAwarded > 0 && (
+                              <span style={{ color: 'var(--success)' }}>
+                                +{submission.aiComplexityBonusAwarded} bonus
+                              </span>
+                            )}
+                          </p>
+                        )}
                       </div>
                       <div className="col-span-2">
                         <span className="text-xs px-2 py-0.5 rounded-md font-medium"
