@@ -29,7 +29,7 @@ export default async function SubmissionsPage() {
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
-      <main className="flex-1 app-shell-main overflow-y-auto p-8">
+      <main className="flex-1 app-shell-main overflow-y-auto p-4 pt-20 sm:p-6 md:p-8 md:pt-8">
         <div className="max-w-5xl mx-auto">
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
@@ -42,7 +42,7 @@ export default async function SubmissionsPage() {
           </div>
 
           <div className="glass rounded-2xl overflow-hidden">
-            <div className="grid grid-cols-12 gap-4 px-6 py-3 text-xs font-medium"
+            <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 text-xs font-medium"
               style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>
               <div className="col-span-5">Problem</div>
               <div className="col-span-2">Difficulty</div>
@@ -65,10 +65,10 @@ export default async function SubmissionsPage() {
                     <Link
                       key={submission.id}
                       href={`/problems/${submission.problem.slug}`}
-                      className="grid grid-cols-12 gap-4 px-6 py-4 items-center transition-all"
+                      className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 px-4 md:px-6 py-4 items-start md:items-center transition-all"
                       style={{ textDecoration: 'none' }}
                     >
-                      <div className="col-span-5 min-w-0">
+                      <div className="md:col-span-5 min-w-0">
                         <p className="text-sm font-medium truncate">
                           {submission.problem.title}
                         </p>
@@ -84,23 +84,29 @@ export default async function SubmissionsPage() {
                           </p>
                         )}
                       </div>
-                      <div className="col-span-2">
+                      <div className="md:col-span-2 flex items-center justify-between md:block">
+                        <span className="md:hidden text-xs" style={{ color: 'var(--text-muted)' }}>Difficulty</span>
                         <span className="text-xs px-2 py-0.5 rounded-md font-medium"
                           style={{ color: diff.color, background: diff.bg }}>
                           {diff.label}
                         </span>
                       </div>
-                      <div className="col-span-2">
+                      <div className="md:col-span-2 flex items-center justify-between md:block">
+                        <span className="md:hidden text-xs" style={{ color: 'var(--text-muted)' }}>Status</span>
                         <span className="text-xs font-medium" style={{ color: status.color }}>
                           {status.label}
                         </span>
                       </div>
-                      <div className="col-span-1 text-xs uppercase" style={{ color: 'var(--text-muted)' }}>
-                        {submission.language}
+                      <div className="md:col-span-1 flex items-center justify-between md:block text-xs uppercase" style={{ color: 'var(--text-muted)' }}>
+                        <span className="md:hidden normal-case">Language</span>
+                        <span>{submission.language}</span>
                       </div>
-                      <div className="col-span-2 flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>
-                        <Clock size={12} />
-                        {formatRelative(submission.submittedAt)}
+                      <div className="md:col-span-2 flex items-center justify-between md:justify-start gap-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>
+                        <span className="md:hidden">Submitted</span>
+                        <span className="flex items-center gap-1.5">
+                          <Clock size={12} />
+                          {formatRelative(submission.submittedAt)}
+                        </span>
                       </div>
                     </Link>
                   )

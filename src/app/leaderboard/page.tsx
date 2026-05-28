@@ -23,7 +23,7 @@ export default async function LeaderboardPage() {
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
-      <main className="flex-1 app-shell-main overflow-y-auto p-8">
+      <main className="flex-1 app-shell-main overflow-y-auto p-4 pt-20 sm:p-6 md:p-8 md:pt-8">
         <div className="max-w-3xl mx-auto">
           {/* Header */}
           <div className="mb-8">
@@ -78,7 +78,7 @@ export default async function LeaderboardPage() {
 
           {/* Full table */}
           <div className="glass rounded-2xl overflow-hidden">
-            <div className="grid grid-cols-12 gap-4 px-6 py-3 text-xs font-medium"
+            <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 text-xs font-medium"
               style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>
               <div className="col-span-1">Rank</div>
               <div className="col-span-5">Student</div>
@@ -93,17 +93,17 @@ export default async function LeaderboardPage() {
                 const rankColor = rank === 1 ? '#f59e0b' : rank === 2 ? '#94a3b8' : rank === 3 ? '#cd7f32' : 'var(--text-muted)'
                 return (
                   <div key={u.id}
-                    className="grid grid-cols-12 gap-4 px-6 py-4 items-center transition-all"
+                    className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 px-4 md:px-6 py-4 items-start md:items-center transition-all"
                     style={{
                       background: isCurrentUser ? 'var(--accent-dim)' : 'transparent',
                       borderLeft: isCurrentUser ? '3px solid var(--accent)' : '3px solid transparent',
                     }}>
-                    <div className="col-span-1">
+                    <div className="md:col-span-1">
                       <span className="text-sm font-bold" style={{ color: rankColor }}>
                         #{rank}
                       </span>
                     </div>
-                    <div className="col-span-5 flex items-center gap-3">
+                    <div className="md:col-span-5 flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
                         style={{ background: 'var(--bg-elevated)', color: 'var(--accent)', border: '1px solid var(--border)' }}>
                         {generateAvatar(u.name)}
@@ -114,13 +114,15 @@ export default async function LeaderboardPage() {
                         </p>
                       </div>
                     </div>
-                    <div className="col-span-3">
+                    <div className="md:col-span-3 flex items-center justify-between md:block">
+                      <span className="md:hidden text-xs" style={{ color: 'var(--text-muted)' }}>Points</span>
                       <div className="flex items-center gap-1.5">
                         <Star size={13} style={{ color: '#f59e0b' }} />
                         <span className="font-semibold">{u.totalPoints}</span>
                       </div>
                     </div>
-                    <div className="col-span-3">
+                    <div className="md:col-span-3 flex items-center justify-between md:block">
+                      <span className="md:hidden text-xs" style={{ color: 'var(--text-muted)' }}>Solved</span>
                       <div className="flex items-center gap-1.5">
                         <Code2 size={13} style={{ color: 'var(--success)' }} />
                         <span style={{ color: 'var(--text-secondary)' }}>{u._count.submissions}</span>

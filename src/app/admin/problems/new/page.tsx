@@ -111,7 +111,7 @@ export default function CreateProblemPage() {
                     onBlur={e => e.target.style.borderColor = 'var(--border)'} />
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Difficulty</label>
                     <select value={form.difficulty} onChange={set('difficulty')}
@@ -171,7 +171,7 @@ export default function CreateProblemPage() {
                         </button>
                       )}
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs mb-1" style={{ color: 'var(--text-muted)' }}>Input</label>
                         <textarea value={ex.input} rows={2}
@@ -237,7 +237,7 @@ export default function CreateProblemPage() {
                         </button>
                       )}
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs mb-1" style={{ color: 'var(--text-muted)' }}>Input (one item per line)</label>
                         <textarea value={tc.input} rows={3}
@@ -318,7 +318,7 @@ export default function CreateProblemPage() {
             )}
 
             {/* Actions */}
-            <div className="flex gap-3 pb-8">
+            <div className="flex flex-col sm:flex-row gap-3 pb-8">
               <button type="button" onClick={e => handleSubmit(e as any, false)} disabled={loading}
                 className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-medium transition-all"
                 style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-secondary)', cursor: 'pointer' }}>

@@ -184,7 +184,7 @@ export default function ContestArena({
   return (
     <div className="flex min-h-screen">
       <Sidebar />
-      <main className="flex-1 app-shell-main p-8">
+      <main className="flex-1 app-shell-main p-4 pt-20 sm:p-6 md:p-8 md:pt-8">
         <div className="max-w-5xl mx-auto space-y-6">
 
           {/* Back */}
@@ -195,7 +195,7 @@ export default function ContestArena({
 
           {/* Header card */}
           <div className="glass rounded-2xl p-6">
-            <div className="flex items-start justify-between gap-6">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
                   <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
@@ -220,7 +220,7 @@ export default function ContestArena({
                   </p>
                 )}
 
-                <div className="flex gap-5 text-sm" style={{ color: 'var(--text-muted)' }}>
+                <div className="flex flex-wrap gap-3 sm:gap-5 text-sm" style={{ color: 'var(--text-muted)' }}>
                   <span className="flex items-center gap-1.5">
                     <Trophy size={14} /> {formatCount(contest.problems.length, 'problem')}
                   </span>
@@ -238,7 +238,7 @@ export default function ContestArena({
               </div>
 
               {/* Timer + join */}
-              <div className="flex flex-col items-end gap-3 flex-shrink-0">
+              <div className="flex flex-col items-start sm:items-end gap-3 flex-shrink-0">
                 {contest.status !== 'ENDED' && (
                   <div className="text-right">
                     <p className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>
@@ -284,7 +284,7 @@ export default function ContestArena({
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1 p-1 rounded-xl w-fit"
+          <div className="flex gap-1 p-1 rounded-xl w-full sm:w-fit overflow-x-auto"
             style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
             {(['problems', 'leaderboard'] as const).map(t => (
               <button key={t} onClick={() => setTab(t)}
@@ -302,7 +302,7 @@ export default function ContestArena({
           {/* Problems tab */}
           {tab === 'problems' && (
             <div className="glass rounded-2xl overflow-hidden">
-              <div className="grid grid-cols-12 gap-4 px-6 py-3 text-xs font-medium"
+              <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 text-xs font-medium"
                 style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>
                 <div className="col-span-1">#</div>
                 <div className="col-span-6">Problem</div>
@@ -327,21 +327,26 @@ export default function ContestArena({
                       : `/problems/${p.slug}`
 
                     const inner = (
-                      <div className="grid grid-cols-12 gap-4 px-6 py-4 items-center"
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 px-4 md:px-6 py-4 items-start md:items-center"
                         onMouseEnter={e => canSolve && (e.currentTarget.style.background = 'var(--bg-elevated)')}
                         onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                        <div className="col-span-1 text-sm font-mono" style={{ color: 'var(--text-muted)' }}>{i + 1}</div>
-                        <div className="col-span-6">
+                        <div className="md:col-span-1 text-sm font-mono" style={{ color: 'var(--text-muted)' }}>#{i + 1}</div>
+                        <div className="md:col-span-6">
                           <p className="text-sm font-medium">{p.title}</p>
                         </div>
-                        <div className="col-span-2">
+                        <div className="md:col-span-2 flex items-center justify-between md:block">
+                          <span className="md:hidden text-xs" style={{ color: 'var(--text-muted)' }}>Difficulty</span>
                           <span className="text-xs font-medium px-2 py-1 rounded-md"
                             style={{ color: diff.color, background: diff.bg }}>
                             {diff.label}
                           </span>
                         </div>
-                        <div className="col-span-2 text-sm font-medium">{formatCount(p.points, 'point')}</div>
-                        <div className="col-span-1">
+                        <div className="md:col-span-2 flex items-center justify-between md:block text-sm font-medium">
+                          <span className="md:hidden text-xs font-normal" style={{ color: 'var(--text-muted)' }}>Points</span>
+                          {formatCount(p.points, 'point')}
+                        </div>
+                        <div className="md:col-span-1 flex items-center justify-between md:block">
+                          <span className="md:hidden text-xs" style={{ color: 'var(--text-muted)' }}>Status</span>
                           {solved
                             ? <CheckCircle2 size={16} style={{ color: 'var(--success)' }} />
                             : <Circle size={16} style={{ color: 'var(--text-muted)' }} />
@@ -391,7 +396,7 @@ export default function ContestArena({
               ) : (
                 <>
                   {/* Header */}
-                  <div className="grid grid-cols-12 gap-4 px-6 py-3 text-xs font-medium"
+                  <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 text-xs font-medium"
                     style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>
                     <div className="col-span-1">Rank</div>
                     <div className="col-span-4">Participant</div>
@@ -405,19 +410,20 @@ export default function ContestArena({
                       const isMe = entry.userId === session?.user?.id
                       return (
                         <div key={entry.userId}
-                          className="grid grid-cols-12 gap-4 px-6 py-4 items-center"
+                          className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 px-4 md:px-6 py-4 items-start md:items-center"
                           style={{ background: isMe ? 'var(--accent-dim)' : 'transparent' }}>
-                          <div className="col-span-1 flex items-center">
+                          <div className="md:col-span-1 flex items-center">
                             {rankMedal(entry.rank)}
                           </div>
-                          <div className="col-span-4">
+                          <div className="md:col-span-4">
                             <p className="text-sm font-medium">
                               {entry.name}
                               {isMe && <span className="ml-2 text-xs px-1.5 py-0.5 rounded"
                                 style={{ background: 'var(--accent)', color: '#fff' }}>you</span>}
                             </p>
                           </div>
-                          <div className="col-span-3">
+                          <div className="md:col-span-3 flex items-center justify-between md:block">
+                            <span className="md:hidden text-xs" style={{ color: 'var(--text-muted)' }}>Solved</span>
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold"
                                 style={{ color: 'var(--success)' }}>
@@ -435,12 +441,14 @@ export default function ContestArena({
                               </div>
                             </div>
                           </div>
-                          <div className="col-span-2 text-sm font-semibold"
+                          <div className="md:col-span-2 flex items-center justify-between md:block text-sm font-semibold"
                             style={{ color: 'var(--accent)' }}>
+                            <span className="md:hidden text-xs font-normal" style={{ color: 'var(--text-muted)' }}>Points</span>
                             {entry.points}
                           </div>
-                          <div className="col-span-2 text-sm" style={{ color: 'var(--text-muted)' }}>
-                            {entry.solved > 0 ? formatTime(entry.totalTimeSec) : '-'}
+                          <div className="md:col-span-2 flex items-center justify-between md:block text-sm" style={{ color: 'var(--text-muted)' }}>
+                            <span className="md:hidden text-xs">Time</span>
+                            <span>{entry.solved > 0 ? formatTime(entry.totalTimeSec) : '-'}</span>
                           </div>
                         </div>
                       )

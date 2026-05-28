@@ -72,7 +72,7 @@ export default function TeachersClient({ teachers: initial }: Props) {
         return (
           <div
             key={t.id}
-            className="glass rounded-2xl p-5 flex items-center gap-4 transition-all"
+            className="glass rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center gap-4 transition-all"
             onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-elevated)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg-surface)')}
           >
@@ -87,7 +87,7 @@ export default function TeachersClient({ teachers: initial }: Props) {
               {t.isActive ? 'Active' : pendingApproval ? 'Pending approval' : 'Email not confirmed'}
             </p>
           </div>
-          <div className="text-right flex-shrink-0 mr-2">
+          <div className="text-left sm:text-right flex-shrink-0 sm:mr-2 w-full sm:w-auto">
             <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
               {formatCount(t._count.createdProblems, 'problem')} - {formatCount(t._count.createdContests, 'contest')}
             </p>
@@ -109,7 +109,7 @@ export default function TeachersClient({ teachers: initial }: Props) {
           )}
 
           {confirmId === t.id ? (
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-2 flex-shrink-0 w-full sm:w-auto justify-end">
               <button
                 onClick={() => handleDelete(t.id)}
                 disabled={deletingId === t.id}

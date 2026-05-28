@@ -18,6 +18,38 @@ type ContestProblemNav = {
   slug: string
 }
 
+function ProblemDetailSkeleton() {
+  return (
+    <div className="flex flex-col lg:flex-row min-h-screen lg:h-screen overflow-hidden">
+      <div className="w-full lg:w-[45%] lg:border-r" style={{ borderColor: 'var(--border)' }}>
+        <div className="px-4 sm:px-6 py-5" style={{ borderBottom: '1px solid var(--border)' }}>
+          <div className="skeleton h-6 w-24 mb-4" />
+          <div className="skeleton h-7 w-2/3 mb-3" />
+          <div className="flex gap-2">
+            <div className="skeleton h-6 w-16" />
+            <div className="skeleton h-6 w-20" />
+            <div className="skeleton h-6 w-14" />
+          </div>
+        </div>
+        <div className="px-4 sm:px-6 py-5 space-y-5">
+          <div className="skeleton h-4 w-full" />
+          <div className="skeleton h-4 w-11/12" />
+          <div className="skeleton h-4 w-4/5" />
+          <div className="skeleton h-32 w-full" />
+        </div>
+      </div>
+      <div className="flex-1 min-h-[560px] flex flex-col">
+        <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
+          <div className="skeleton h-9 w-32" />
+          <div className="skeleton h-9 w-20 ml-auto" />
+          <div className="skeleton h-9 w-24" />
+        </div>
+        <div className="skeleton flex-1 rounded-none" />
+      </div>
+    </div>
+  )
+}
+
 export default function ProblemPage() {
   const { id } = useParams<{ id: string }>()
   const searchParams = useSearchParams()
@@ -93,11 +125,7 @@ export default function ProblemPage() {
     setSubmitting(false)
   }
 
-  if (loading) return (
-    <div className="flex items-center justify-center h-full">
-      <Loader2 size={24} className="animate-spin" style={{ color: 'var(--accent)' }} />
-    </div>
-  )
+  if (loading) return <ProblemDetailSkeleton />
 
   if (!problem) return (
     <div className="flex items-center justify-center h-full" style={{ color: 'var(--text-muted)' }}>
@@ -116,12 +144,12 @@ export default function ProblemPage() {
   const contestProblemHref = (slug: string) => `/problems/${slug}?contestId=${contestId}`
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex flex-col lg:flex-row min-h-screen lg:h-screen overflow-y-auto lg:overflow-hidden">
       {/* Left panel - Problem description */}
-      <div className="w-[45%] border-r overflow-y-auto flex flex-col"
+      <div className="w-full lg:w-[45%] border-b lg:border-b-0 lg:border-r overflow-visible lg:overflow-y-auto flex flex-col"
         style={{ borderColor: 'var(--border)' }}>
         {/* Header */}
-        <div className="px-6 py-5 sticky top-0 z-10" style={{ background: 'var(--bg-base)', borderBottom: '1px solid var(--border)' }}>
+        <div className="px-4 sm:px-6 py-5 sticky top-0 z-10" style={{ background: 'var(--bg-base)', borderBottom: '1px solid var(--border)' }}>
           {contestId && (
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
               <Link href={contestHref}
@@ -219,7 +247,7 @@ export default function ProblemPage() {
           </div>
         </div>
 
-        <div className="flex-1 px-6 py-5">
+        <div className="flex-1 px-4 sm:px-6 py-5">
           {activeTab === 'description' ? (
             <div className="space-y-6">
               {/* Description */}
@@ -299,9 +327,9 @@ export default function ProblemPage() {
       </div>
 
       {/* Right panel - Editor */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden min-h-[560px] lg:min-h-0">
         {/* Editor toolbar */}
-        <div className="flex items-center gap-3 px-4 py-3 flex-shrink-0"
+        <div className="flex flex-wrap items-center gap-3 px-4 py-3 flex-shrink-0"
           style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface)' }}>
           <select
             value={language}

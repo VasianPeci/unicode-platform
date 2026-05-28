@@ -6,8 +6,14 @@ import { Providers } from './providers'
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
 export const metadata: Metadata = {
-  title: 'UniCode — University Coding Platform',
+  title: {
+    default: 'UniCode - University Coding Platform',
+    template: '%s | UniCode',
+  },
   description: 'Solve problems, join contests, and rank among your peers.',
+  icons: {
+    icon: '/icon.svg',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

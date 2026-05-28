@@ -156,7 +156,7 @@ export default function CreateContestPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label
                       className="block text-sm font-medium mb-2"
@@ -266,7 +266,7 @@ export default function CreateContestPage() {
                     return (
                       <div
                         key={p.id}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl"
+                        className="flex flex-wrap items-center gap-3 px-4 py-3 rounded-xl"
                         style={{
                           background: "var(--accent-dim)",
                           border: "1px solid var(--border-accent)",
@@ -361,7 +361,7 @@ export default function CreateContestPage() {
                       key={p.id}
                       type="button"
                       onClick={() => toggleProblem(p)}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all"
+                      className="w-full flex flex-wrap items-center gap-3 px-4 py-3 rounded-xl text-left transition-all"
                       style={{
                         background: "var(--bg-elevated)",
                         border: "1px solid var(--border)",
@@ -411,7 +411,7 @@ export default function CreateContestPage() {
               </div>
             )}
 
-            <div className="flex gap-3 pb-8">
+            <div className="flex flex-col sm:flex-row gap-3 pb-8">
               <button
                 type="button"
                 onClick={() => router.back()}

@@ -36,9 +36,86 @@ body {
   transition: margin-left 0.3s ease;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   :root { --sidebar-width: 0rem; }
   .app-shell-main { margin-left: 0; }
+}
+
+.sidebar-panel {
+  width: 18rem;
+  max-width: calc(100vw - 1.5rem);
+  box-shadow: 24px 0 70px rgba(0, 0, 0, 0.32);
+}
+
+@media (min-width: 768px) {
+  .sidebar-panel {
+    width: var(--desktop-sidebar-width, var(--sidebar-width));
+    max-width: none;
+    box-shadow: none;
+  }
+}
+
+.sidebar-edge-toggle {
+  position: absolute;
+  top: 5.25rem;
+  right: -0.875rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
+}
+
+.sidebar-edge-toggle:hover {
+  color: var(--text-primary);
+  border-color: var(--border-accent);
+  background: var(--bg-highlight);
+  transform: translateX(1px);
+}
+
+.text-muted { color: var(--text-muted); }
+.text-secondary { color: var(--text-secondary); }
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(90deg, var(--bg-surface), var(--bg-elevated), var(--bg-surface));
+  background-size: 220% 100%;
+  border-radius: 8px;
+  animation: skeleton-shimmer 1.25s ease-in-out infinite;
+}
+
+.skeleton-card {
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  border-radius: 12px;
+}
+
+.skeleton-line {
+  height: 0.875rem;
+  border-radius: 999px;
+}
+
+.skeleton-circle {
+  border-radius: 999px;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 120% 0; }
+  100% { background-position: -120% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+    background: var(--bg-elevated);
+  }
 }
 
 /* Scrollbar */

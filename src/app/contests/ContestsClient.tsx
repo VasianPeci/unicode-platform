@@ -54,11 +54,11 @@ export default function ContestsClient({ session, contests }: Props) {
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
 
-      <main className="flex-1 app-shell-main overflow-y-auto p-8">
+      <main className="flex-1 app-shell-main overflow-y-auto p-4 pt-20 sm:p-6 md:p-8 md:pt-8">
         <div className="max-w-4xl mx-auto">
 
           {/* HEADER */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <div>
               <h1 className="text-3xl font-bold mb-1 flex items-center gap-3">
                 <Trophy size={28} style={{ color: 'var(--accent)' }} />
@@ -99,7 +99,7 @@ export default function ContestsClient({ session, contests }: Props) {
                   key={contest.id}
                   className="glass rounded-2xl p-6 transition-all group"
                 >
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
 
                     <div className="flex-1">
                       {session?.user?.role === 'STUDENT' && contest.participants?.length > 0 && (
@@ -110,7 +110,7 @@ export default function ContestsClient({ session, contests }: Props) {
                       )}
 
                       {/* STATUS */}
-                      <div className="flex items-center gap-3 mb-2">
+                      <div className="flex flex-wrap items-center gap-3 mb-2">
                         <span
                           className="text-xs font-medium px-2 py-0.5 rounded-full"
                           style={{ color: s.color, background: s.bg }}
@@ -151,7 +151,7 @@ export default function ContestsClient({ session, contests }: Props) {
                       )}
 
                       {/* META */}
-                      <div className="flex gap-4 text-xs text-muted">
+                      <div className="flex flex-wrap gap-3 sm:gap-4 text-xs text-muted">
                         <span className="flex items-center gap-1">
                           <Trophy size={12} />
                           {formatCount(contest._count.problems, 'problem')}
@@ -170,7 +170,7 @@ export default function ContestsClient({ session, contests }: Props) {
 
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 sm:flex-shrink-0 sm:self-center">
                       {canDelete && (
                         <button
                           onClick={() => handleDelete(contest)}

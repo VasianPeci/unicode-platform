@@ -75,7 +75,7 @@ export default function StudentsClient({ session, students: initial }: Props) {
 
         {/* HEADER ROW */}
         <div
-          className="grid grid-cols-12 gap-4 px-6 py-3 text-xs font-medium"
+          className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 text-xs font-medium"
           style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}
         >
           <div className="col-span-4">Student</div>
@@ -93,12 +93,12 @@ export default function StudentsClient({ session, students: initial }: Props) {
             return (
               <div
                 key={s.id}
-                className="grid grid-cols-12 gap-4 px-6 py-4 items-center transition-all"
+                className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 px-4 md:px-6 py-4 items-start md:items-center transition-all"
                 onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-elevated)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
               {/* STUDENT */}
-              <div className="col-span-4 flex items-center gap-3">
+              <div className="md:col-span-4 flex items-center gap-3">
                 <div className="relative">
                   <div
                     className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
@@ -121,26 +121,33 @@ export default function StudentsClient({ session, students: initial }: Props) {
               </div>
 
               {/* EMAIL */}
-              <div className="col-span-3">
+              <div className="md:col-span-3 flex items-center justify-between gap-3 min-w-0">
+                <span className="md:hidden text-xs flex-shrink-0" style={{ color: 'var(--text-muted)' }}>Email</span>
                 <p className="text-sm truncate" style={{ color: 'var(--text-secondary)' }}>
                   {s.email}
                 </p>
               </div>
 
               {/* POINTS */}
-              <div className="col-span-2 flex items-center gap-1.5">
-                <Star size={13} style={{ color: '#f59e0b' }} />
-                <span className="text-sm font-semibold">{s.totalPoints}</span>
+              <div className="md:col-span-2 flex items-center justify-between md:justify-start gap-1.5">
+                <span className="md:hidden text-xs" style={{ color: 'var(--text-muted)' }}>Points</span>
+                <span className="flex items-center gap-1.5">
+                  <Star size={13} style={{ color: '#f59e0b' }} />
+                  <span className="text-sm font-semibold">{s.totalPoints}</span>
+                </span>
               </div>
 
               {/* SOLVED */}
-              <div className="col-span-2 flex items-center gap-1.5">
-                <CheckCircle2 size={13} style={{ color: 'var(--success)' }} />
-                <span className="text-sm">{s._count.submissions}</span>
+              <div className="md:col-span-2 flex items-center justify-between md:justify-start gap-1.5">
+                <span className="md:hidden text-xs" style={{ color: 'var(--text-muted)' }}>Solved</span>
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 size={13} style={{ color: 'var(--success)' }} />
+                  <span className="text-sm">{s._count.submissions}</span>
+                </span>
               </div>
 
               {/* DELETE */}
-              <div className="col-span-1 flex justify-end gap-1">
+              <div className="md:col-span-1 flex justify-end gap-1">
                 {pendingApproval && (
                   <button
                     onClick={() => handleApprove(s.id)}

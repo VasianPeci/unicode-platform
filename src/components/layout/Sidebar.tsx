@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
 import {
   LayoutDashboard, Code2, Trophy, Users, BookOpen,
-  LogOut, Crown, ShieldCheck, PanelLeftClose, PanelLeftOpen
+  LogOut, Crown, ShieldCheck, PanelLeftClose, PanelLeftOpen, Menu, X
 } from 'lucide-react'
 import { cn, formatCount, generateAvatar } from '@/lib/utils'
 
@@ -37,6 +37,7 @@ export function Sidebar() {
   const { data: session, status } = useSession()
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
   const [livePoints, setLivePoints] = useState<number | null>(null)
 
   useEffect(() => {
@@ -48,6 +49,10 @@ export function Sidebar() {
     document.documentElement.style.setProperty('--sidebar-width', collapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH)
     localStorage.setItem('unicode-sidebar-collapsed', String(collapsed))
   }, [collapsed])
+
+  useEffect(() => {
+    setMobileOpen(false)
+  }, [pathname])
 
   useEffect(() => {
     if (session?.user?.role !== 'STUDENT') return
@@ -79,14 +84,23 @@ export function Sidebar() {
 
   if (status === 'loading') {
     return (
+      <>
+        <button
+          className="md:hidden fixed left-4 top-4 z-[70] h-10 w-10 rounded-xl"
+          style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
+          aria-label="Open navigation"
+        >
+          <Menu size={18} className="mx-auto" style={{ color: 'var(--text-secondary)' }} />
+        </button>
       <aside
-        className="fixed left-0 top-0 h-full transition-all duration-300"
-        style={{
-          width: 'var(--sidebar-width)',
-          background: 'var(--bg-surface)',
-          borderRight: '1px solid var(--border)',
-        }}
-      />
+          className="sidebar-panel hidden md:block fixed left-0 top-0 h-full transition-all duration-300"
+          style={{
+            '--desktop-sidebar-width': 'var(--sidebar-width)',
+            background: 'var(--bg-surface)',
+            borderRight: '1px solid var(--border)',
+          } as CSSProperties}
+        />
+      </>
     )
   }
 
@@ -98,17 +112,29 @@ export function Sidebar() {
   const roleLabel = role.charAt(0) + role.slice(1).toLowerCase()
   const points = livePoints ?? session.user.totalPoints ?? 0
 
-  return (
+  const sidebar = (
     <aside
-      className="fixed left-0 top-0 h-full flex flex-col z-50 transition-all duration-300"
+      className={cn(
+        'sidebar-panel fixed left-0 top-0 h-full flex flex-col z-50 transition-all duration-300',
+        mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+      )}
       style={{
-        width: collapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH,
+        '--desktop-sidebar-width': collapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH,
         background: 'var(--bg-surface)',
         borderRight: '1px solid var(--border)',
-      }}
+      } as CSSProperties}
     >
+      <button
+        onClick={() => setCollapsed(value => !value)}
+        className="sidebar-edge-toggle hidden md:flex"
+        title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+      >
+        {collapsed ? <PanelLeftOpen size={15} /> : <PanelLeftClose size={15} />}
+      </button>
+
       <div
-        className={cn('flex items-center gap-3 px-4 py-5', collapsed && 'justify-center')}
+        className={cn('flex items-center gap-3 px-4 py-5', collapsed && 'md:justify-center')}
         style={{ borderBottom: '1px solid var(--border)' }}
       >
         <div
@@ -121,43 +147,25 @@ export function Sidebar() {
           <Code2 size={16} style={{ color: 'var(--accent)' }} />
         </div>
 
-        {!collapsed && (
-          <>
-            <span className="font-bold text-lg tracking-tight gradient-text">
-              UniCode
-            </span>
-            <button
-              onClick={() => setCollapsed(true)}
-              className="ml-auto p-1.5 rounded-lg transition-all"
-              style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
-              title="Collapse sidebar"
-              aria-label="Collapse sidebar"
-            >
-              <PanelLeftClose size={16} />
-            </button>
-          </>
-        )}
+        <span className={cn('font-bold text-lg tracking-tight gradient-text', collapsed && 'md:hidden')}>
+          UniCode
+        </span>
+        <button
+          onClick={() => setMobileOpen(false)}
+          className="ml-auto p-1.5 rounded-lg transition-all md:hidden"
+          style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+          title="Close navigation"
+          aria-label="Close navigation"
+        >
+          <X size={16} />
+        </button>
       </div>
 
-      {session.user.universityName && !collapsed && (
-        <div className="px-5 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
+      {session.user.universityName && (
+        <div className={cn('px-5 py-3', collapsed && 'md:hidden')} style={{ borderBottom: '1px solid var(--border)' }}>
           <p className="text-xs font-medium truncate" style={{ color: 'var(--text-muted)' }}>
             {session.user.universityName}
           </p>
-        </div>
-      )}
-
-      {collapsed && (
-        <div className="px-3 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
-          <button
-            onClick={() => setCollapsed(false)}
-            className="w-full flex items-center justify-center p-2 rounded-lg transition-all"
-            style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-secondary)', cursor: 'pointer' }}
-            title="Expand sidebar"
-            aria-label="Expand sidebar"
-          >
-            <PanelLeftOpen size={16} />
-          </button>
         </div>
       )}
 
@@ -171,7 +179,7 @@ export function Sidebar() {
               href={href}
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
-                collapsed && 'justify-center px-0'
+                collapsed && 'md:justify-center md:px-0'
               )}
               title={collapsed ? label : undefined}
               style={{
@@ -192,7 +200,7 @@ export function Sidebar() {
               }}
             >
               <Icon size={16} />
-              {!collapsed && label}
+              <span className={cn(collapsed && 'md:hidden')}>{label}</span>
             </Link>
           )
         })}
@@ -200,7 +208,7 @@ export function Sidebar() {
 
       <div className="px-3 py-4" style={{ borderTop: '1px solid var(--border)' }}>
         <div
-          className={cn('flex items-center gap-3 px-3 py-2.5 rounded-lg mb-2', collapsed && 'justify-center px-0')}
+          className={cn('flex items-center gap-3 px-3 py-2.5 rounded-lg mb-2', collapsed && 'md:justify-center md:px-0')}
           style={{ background: 'var(--bg-elevated)' }}
           title={collapsed ? `${session.user.name} - ${roleLabel}` : undefined}
         >
@@ -215,21 +223,19 @@ export function Sidebar() {
             {initials}
           </div>
 
-          {!collapsed && (
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
-                {session.user.name}
-              </p>
-              <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
-                {role === 'STUDENT' ? `${roleLabel} - ${formatCount(points, 'point')}` : roleLabel}
-              </p>
-            </div>
-          )}
+          <div className={cn('min-w-0 flex-1', collapsed && 'md:hidden')}>
+            <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
+              {session.user.name}
+            </p>
+            <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
+              {role === 'STUDENT' ? `${roleLabel} - ${formatCount(points, 'point')}` : roleLabel}
+            </p>
+          </div>
         </div>
 
         <button
           onClick={() => signOut({ callbackUrl: '/auth/login' })}
-          className={cn('w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all', collapsed && 'justify-center px-0')}
+          className={cn('w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all', collapsed && 'md:justify-center md:px-0')}
           title={collapsed ? 'Sign out' : undefined}
           style={{
             color: 'var(--text-muted)',
@@ -247,9 +253,30 @@ export function Sidebar() {
           }}
         >
           <LogOut size={15} />
-          {!collapsed && 'Sign out'}
+          <span className={cn(collapsed && 'md:hidden')}>Sign out</span>
         </button>
       </div>
     </aside>
+  )
+
+  return (
+    <>
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="md:hidden fixed left-4 top-4 z-[70] h-10 w-10 rounded-xl flex items-center justify-center shadow-lg"
+        style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+        aria-label="Open navigation"
+      >
+        <Menu size={18} />
+      </button>
+      {mobileOpen && (
+        <button
+          className="md:hidden fixed inset-0 z-40 bg-black/50"
+          onClick={() => setMobileOpen(false)}
+          aria-label="Close navigation overlay"
+        />
+      )}
+      {sidebar}
+    </>
   )
 }
