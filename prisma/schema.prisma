@@ -72,6 +72,7 @@ model User {
   createdContests     Contest[]           @relation("ContestCreator")
   contestParticipants ContestParticipant[]
   emailVerifications  EmailVerification[]
+  accountSecurityCodes AccountSecurityCode[]
 
   @@index([universityId])
   @@index([totalPoints])
@@ -93,6 +94,24 @@ model EmailVerification {
   @@index([userId])
   @@index([expiresAt])
   @@map("email_verifications")
+}
+
+model AccountSecurityCode {
+  id         String    @id @default(uuid())
+  email      String
+  purpose    String
+  codeHash   String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([email, purpose])
+  @@index([userId, purpose])
+  @@index([expiresAt])
+  @@map("account_security_codes")
 }
 
 model Problem {

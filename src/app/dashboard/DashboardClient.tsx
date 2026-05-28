@@ -9,6 +9,7 @@ import {
   ArrowRight,
   CheckCircle2,
   Clock,
+  Settings,
 } from 'lucide-react'
 
 import { DIFFICULTY_CONFIG, STATUS_CONFIG } from '@/types'
@@ -122,18 +123,29 @@ export default function DashboardClient({
   return (
     <div className="max-w-5xl mx-auto space-y-8 stagger-children">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold mb-1">
-          Welcome back,{' '}
-          <span className="gradient-text">
-            {session.user.name.split(' ')[0]}
-          </span>
-        </h1>
-        <p style={{ color: 'var(--text-secondary)' }}>
-          {session.user.role.charAt(0) +
-            session.user.role.slice(1).toLowerCase()}{' '}
-          - {session.user.universityName}
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold mb-1">
+            Welcome back,{' '}
+            <span className="gradient-text">
+              {session.user.name.split(' ')[0]}
+            </span>
+          </h1>
+          <p style={{ color: 'var(--text-secondary)' }}>
+            {session.user.role.charAt(0) +
+              session.user.role.slice(1).toLowerCase()}{' '}
+            - {session.user.universityName}
+          </p>
+        </div>
+
+        <Link
+          href="/settings"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
+          style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)', textDecoration: 'none' }}
+        >
+          <Settings size={16} />
+          Settings
+        </Link>
       </div>
 
       {/* Stats */}

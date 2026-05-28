@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
 import {
   LayoutDashboard, Code2, Trophy, Users, BookOpen,
-  LogOut, Crown, ShieldCheck, PanelLeftClose, PanelLeftOpen, Menu, X
+  LogOut, Crown, ShieldCheck, PanelLeftClose, PanelLeftOpen, Menu, X, Settings
 } from 'lucide-react'
 import { cn, formatCount, generateAvatar } from '@/lib/utils'
 
@@ -18,6 +18,7 @@ const studentNav = [
   { href: '/problems', icon: Code2, label: 'Problems' },
   { href: '/contests', icon: Trophy, label: 'Contests' },
   { href: '/leaderboard', icon: Crown, label: 'Leaderboard' },
+  { href: '/settings', icon: Settings, label: 'Settings' },
 ]
 
 const teacherNav = [
@@ -31,6 +32,7 @@ const adminNav = [
   { href: '/problems', icon: Code2, label: 'Problems' },
   { href: '/contests', icon: Trophy, label: 'Contests' },
   { href: '/leaderboard', icon: Crown, label: 'Leaderboard' },
+  { href: '/settings', icon: Settings, label: 'Settings' },
 ]
 
 export function Sidebar() {

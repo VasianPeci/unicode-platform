@@ -7,6 +7,7 @@ import {
   Trophy,
   ShieldCheck,
   UserCheck,
+  Settings,
 } from 'lucide-react'
 
 type Props = {
@@ -59,14 +60,25 @@ export default function AdminClient({
     <div className="max-w-4xl mx-auto">
 
           {/* HEADER */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-1 flex items-center gap-3">
-              <ShieldCheck size={28} style={{ color: 'var(--accent)' }} />
-              Admin Panel
-            </h1>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              {session.user.universityName}
-            </p>
+          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h1 className="text-3xl font-bold mb-1 flex items-center gap-3">
+                <ShieldCheck size={28} style={{ color: 'var(--accent)' }} />
+                Admin Panel
+              </h1>
+              <p style={{ color: 'var(--text-secondary)' }}>
+                {session.user.universityName}
+              </p>
+            </div>
+
+            <Link
+              href="/settings"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
+              style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)', textDecoration: 'none' }}
+            >
+              <Settings size={16} />
+              Settings
+            </Link>
           </div>
 
           {/* STATS */}

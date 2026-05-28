@@ -41,5 +41,6 @@ export const config = {
     '/contests/:path*',
     '/leaderboard/:path*',
     '/admin/:path*',
+    '/settings/:path*',
   ],
 }

@@ -64,7 +64,7 @@ async function main() {
   // Create teacher
   const teacherHash = await bcrypt.hash("teacher123", 12);
   const teacher = await prisma.user.upsert({
-    where: { email: "teacher@fti.edu,al" },
+    where: { email: "teacher@fti.edu.al" },
     update: {},
     create: {
       email: "teacher@fti.edu.al",
