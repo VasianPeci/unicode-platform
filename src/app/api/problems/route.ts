@@ -62,7 +62,6 @@ export async function GET(req: NextRequest) {
     prisma.problem.count({ where }),
   ])
 
-  // Calculate acceptance rate
   const result = await Promise.all(
     problems.map(async (p) => {
       const [accepted, total] = await Promise.all([

@@ -99,7 +99,6 @@ export default function CreateProblemPage() {
           </div>
 
           <form className="space-y-8">
-            {/* Basic info */}
             <div className="glass rounded-2xl p-6">
               {sectionTitle('Basic Information')}
               <div className="space-y-4">
@@ -155,7 +154,6 @@ export default function CreateProblemPage() {
               </div>
             </div>
 
-            {/* Examples */}
             <div className="glass rounded-2xl p-6">
               {sectionTitle('Examples')}
               <div className="space-y-4">
@@ -204,7 +202,6 @@ export default function CreateProblemPage() {
               </div>
             </div>
 
-            {/* Test Cases */}
             <div className="glass rounded-2xl p-6">
               {sectionTitle('Test Cases')}
               <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>
@@ -263,7 +260,6 @@ export default function CreateProblemPage() {
               </div>
             </div>
 
-            {/* Starter code */}
             <div className="glass rounded-2xl p-6">
               {sectionTitle('Starter Code')}
               <div className="space-y-4">
@@ -283,7 +279,6 @@ export default function CreateProblemPage() {
               </div>
             </div>
 
-            {/* Hints */}
             <div className="glass rounded-2xl p-6">
               {sectionTitle('Hints (optional)')}
               <div className="space-y-3">
@@ -317,7 +312,6 @@ export default function CreateProblemPage() {
               </div>
             )}
 
-            {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-3 pb-8">
               <button type="button" onClick={e => handleSubmit(e as any, false)} disabled={loading}
                 className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-medium transition-all"

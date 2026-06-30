@@ -88,7 +88,6 @@ export default function ContestArena({
   const [solvedIds, setSolvedIds] = useState<Set<string>>(new Set())
   const isStudent = session?.user?.role === 'STUDENT'
 
-  // Countdown
   const [timeLeft, setTimeLeft] = useState(0)
   const [elapsed, setElapsed] = useState(0)
 
@@ -110,7 +109,6 @@ export default function ContestArena({
     return () => clearInterval(id)
   }, [contest])
 
-  // Load solved problems from submissions
   useEffect(() => {
     if (!isJoined || contest.status === 'UPCOMING') return
     const problemIds = contest.problems.map(p => p.id)
@@ -150,7 +148,6 @@ export default function ContestArena({
     fetchLeaderboard(false)
   }, [isJoined, contest.status, fetchLeaderboard])
 
-  // Auto-refresh leaderboard every 30s when active
   useEffect(() => {
     if (contest.status !== 'ACTIVE' || !isJoined) return
     const id = setInterval(() => fetchLeaderboard(tab === 'leaderboard'), 30000)
@@ -187,13 +184,11 @@ export default function ContestArena({
       <main className="flex-1 app-shell-main p-4 pt-20 sm:p-6 md:p-8 md:pt-8">
         <div className="max-w-5xl mx-auto space-y-6">
 
-          {/* Back */}
           <Link href="/contests" className="inline-flex items-center gap-1.5 text-sm"
             style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
             <ArrowLeft size={15} /> All contests
           </Link>
 
-          {/* Header card */}
           <div className="glass rounded-2xl p-6">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6">
               <div className="flex-1">
@@ -237,7 +232,6 @@ export default function ContestArena({
                 </div>
               </div>
 
-              {/* Timer + join */}
               <div className="flex flex-col items-start sm:items-end gap-3 flex-shrink-0">
                 {contest.status !== 'ENDED' && (
                   <div className="text-right">
@@ -283,7 +277,6 @@ export default function ContestArena({
             )}
           </div>
 
-          {/* Tabs */}
           <div className="flex gap-1 p-1 rounded-xl w-full sm:w-fit overflow-x-auto"
             style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
             {(['problems', 'leaderboard'] as const).map(t => (
@@ -299,7 +292,6 @@ export default function ContestArena({
             ))}
           </div>
 
-          {/* Problems tab */}
           {tab === 'problems' && (
             <div className="glass rounded-2xl overflow-hidden">
               <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 text-xs font-medium"
@@ -369,7 +361,6 @@ export default function ContestArena({
             </div>
           )}
 
-          {/* Leaderboard tab */}
           {tab === 'leaderboard' && (
             <div className="glass rounded-2xl overflow-hidden">
               <div className="flex items-center justify-between px-6 py-4"
@@ -395,7 +386,6 @@ export default function ContestArena({
                 </div>
               ) : (
                 <>
-                  {/* Header */}
                   <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 text-xs font-medium"
                     style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>
                     <div className="col-span-1">Rank</div>
@@ -432,7 +422,6 @@ export default function ContestArena({
                               <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
                                 / {contest.problems.length}
                               </span>
-                              {/* Problem dots */}
                               <div className="flex gap-1">
                                 {contest.problems.map(p => (
                                   <div key={p.id} className="w-2 h-2 rounded-full"

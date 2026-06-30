@@ -58,7 +58,6 @@ export default async function DashboardPage() {
       }),
     ])
 
-  // Convert Dates to ISO strings and ensure proper typing
   const formattedSubmissions = recentSubmissions.map(sub => ({
     id: sub.id,
     status: sub.status,

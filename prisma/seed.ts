@@ -4,9 +4,6 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Seeding database...");
-
-  // Create university
   const universities = await Promise.all([
     prisma.university.upsert({
       where: { domain: "fti.edu.al" },
@@ -47,7 +44,6 @@ async function main() {
 
   const university = universities[0];
 
-  // Create admin
   const adminHash = await bcrypt.hash("admin123", 12);
   const admin = await prisma.user.upsert({
     where: { email: "admin@fti.edu.al" },
@@ -61,7 +57,6 @@ async function main() {
     },
   });
 
-  // Create teacher
   const teacherHash = await bcrypt.hash("teacher123", 12);
   const teacher = await prisma.user.upsert({
     where: { email: "teacher@fti.edu.al" },
@@ -75,7 +70,6 @@ async function main() {
     },
   });
 
-  // Create students
   const studentHash = await bcrypt.hash("student123", 12);
   await prisma.user.upsert({
     where: { email: "alice@fti.edu.al" },
@@ -103,7 +97,6 @@ async function main() {
     },
   });
 
-  // Create tags
   const tags = await Promise.all([
     prisma.tag.upsert({
       where: { name: "Array" },
@@ -149,7 +142,6 @@ async function main() {
     }),
   ]);
 
-  // Create problems
   const problem1 = await prisma.problem.upsert({
     where: { slug: "two-sum" },
     update: {},
@@ -342,7 +334,6 @@ public:
     },
   });
 
-  // Tag problems
   await prisma.problemTag.createMany({
     data: [
       { problemId: problem1.id, tagId: tags[0].id },
@@ -354,15 +345,14 @@ public:
     skipDuplicates: true,
   });
 
-  // Create a contest
   const now = new Date();
   const contest = await prisma.contest.create({
     data: {
       title: "Week 1 Assessment",
       description:
         "First week programming assessment covering arrays and strings.",
-      startsAt: new Date(now.getTime() + 1000 * 60 * 60), // 1 hour from now
-      endsAt: new Date(now.getTime() + 1000 * 60 * 60 * 3), // 3 hours from now
+      startsAt: new Date(now.getTime() + 1000 * 60 * 60),
+      endsAt: new Date(now.getTime() + 1000 * 60 * 60 * 3),
       isPublic: true,
       createdById: teacher.id,
       problems: {
@@ -374,14 +364,6 @@ public:
       },
     },
   });
-
-  console.log("✅ Seed complete!");
-  console.log("");
-  console.log("🔐 Test accounts:");
-  console.log("  Admin:   admin@university.edu   / admin123");
-  console.log("  Teacher: teacher@university.edu / teacher123");
-  console.log("  Student: alice@university.edu   / student123");
-  console.log("  Student: bob@university.edu     / student123");
 }
 
 main()

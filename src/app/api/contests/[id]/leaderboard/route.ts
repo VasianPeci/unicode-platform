@@ -36,13 +36,11 @@ export async function GET(
     contest.problems.map(p => [p.problemId, p.pointOverride ?? p.problem.points])
   )
 
-  // Get all participants
   const participants = await prisma.contestParticipant.findMany({
     where: { contestId: params.id, user: { role: 'STUDENT' } },
     include: { user: { select: { id: true, name: true, totalPoints: true } } },
   })
 
-  // Get accepted submissions for this contest's problems, submitted during contest window
   const submissions = await prisma.submission.findMany({
     where: {
       contestId: params.id,
@@ -59,7 +57,6 @@ export async function GET(
     },
   })
 
-  // Build per-user stats: first accepted submission per problem
   const userStats = new Map<string, { solved: Set<string>; totalTime: number; points: number }>()
 
   for (const p of participants) {
@@ -75,7 +72,6 @@ export async function GET(
     stats.points += pointsByProblem.get(sub.problemId) ?? 0
   }
 
-  // Build ranked list
   const ranked = participants
     .map(p => {
       const stats = userStats.get(p.userId)!

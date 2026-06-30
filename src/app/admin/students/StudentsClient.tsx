@@ -58,7 +58,6 @@ export default function StudentsClient({ session, students: initial }: Props) {
   return (
     <div className="max-w-5xl mx-auto">
 
-      {/* HEADER */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-1 flex items-center gap-3">
           <Users size={28} style={{ color: 'var(--accent)' }} />
@@ -70,10 +69,8 @@ export default function StudentsClient({ session, students: initial }: Props) {
         </p>
       </div>
 
-      {/* TABLE */}
       <div className="glass rounded-2xl overflow-hidden">
 
-        {/* HEADER ROW */}
         <div
           className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 text-xs font-medium"
           style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}
@@ -85,7 +82,6 @@ export default function StudentsClient({ session, students: initial }: Props) {
           <div className="col-span-1"></div>
         </div>
 
-        {/* ROWS */}
         <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
           {students.map((s, i) => {
             const pendingApproval = Boolean(s.emailVerifiedAt && !s.isActive)
@@ -97,7 +93,6 @@ export default function StudentsClient({ session, students: initial }: Props) {
                 onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-elevated)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
-              {/* STUDENT */}
               <div className="md:col-span-4 flex items-center gap-3">
                 <div className="relative">
                   <div
@@ -120,7 +115,6 @@ export default function StudentsClient({ session, students: initial }: Props) {
                 </div>
               </div>
 
-              {/* EMAIL */}
               <div className="md:col-span-3 flex items-center justify-between gap-3 min-w-0">
                 <span className="md:hidden text-xs flex-shrink-0" style={{ color: 'var(--text-muted)' }}>Email</span>
                 <p className="text-sm truncate" style={{ color: 'var(--text-secondary)' }}>
@@ -128,7 +122,6 @@ export default function StudentsClient({ session, students: initial }: Props) {
                 </p>
               </div>
 
-              {/* POINTS */}
               <div className="md:col-span-2 flex items-center justify-between md:justify-start gap-1.5">
                 <span className="md:hidden text-xs" style={{ color: 'var(--text-muted)' }}>Points</span>
                 <span className="flex items-center gap-1.5">
@@ -137,7 +130,6 @@ export default function StudentsClient({ session, students: initial }: Props) {
                 </span>
               </div>
 
-              {/* SOLVED */}
               <div className="md:col-span-2 flex items-center justify-between md:justify-start gap-1.5">
                 <span className="md:hidden text-xs" style={{ color: 'var(--text-muted)' }}>Solved</span>
                 <span className="flex items-center gap-1.5">
@@ -146,7 +138,6 @@ export default function StudentsClient({ session, students: initial }: Props) {
                 </span>
               </div>
 
-              {/* DELETE */}
               <div className="md:col-span-1 flex justify-end gap-1">
                 {pendingApproval && (
                   <button

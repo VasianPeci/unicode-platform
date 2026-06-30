@@ -9,7 +9,6 @@ import {
   ArrowRight,
   CheckCircle2,
   Clock,
-  Settings,
 } from 'lucide-react'
 
 import { DIFFICULTY_CONFIG, STATUS_CONFIG } from '@/types'
@@ -122,8 +121,7 @@ export default function DashboardClient({
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 stagger-children">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div>
         <div>
           <h1 className="text-3xl font-bold mb-1">
             Welcome back,{' '}
@@ -137,18 +135,8 @@ export default function DashboardClient({
             - {session.user.universityName}
           </p>
         </div>
-
-        <Link
-          href="/settings"
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
-          style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)', textDecoration: 'none' }}
-        >
-          <Settings size={16} />
-          Settings
-        </Link>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {stats.map(({ label, value, icon: Icon, color }) => (
           <div key={label} className="glass rounded-2xl p-5">
@@ -179,7 +167,6 @@ export default function DashboardClient({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left */}
         <div className="lg:col-span-2 glass rounded-2xl p-6">
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-semibold text-lg">Recent submissions</h2>
@@ -248,7 +235,6 @@ export default function DashboardClient({
           )}
         </div>
 
-        {/* Right */}
         <div className="space-y-4">
           <div className="glass rounded-2xl p-6">
             <h2 className="font-semibold mb-4">Quick start</h2>

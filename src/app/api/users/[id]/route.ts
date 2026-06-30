@@ -85,7 +85,6 @@ export async function DELETE(
   if (target.universityId !== session.user.universityId)
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  // Only ADMIN can delete teachers; ADMIN or TEACHER can delete students
   if (target.role === 'TEACHER' && session.user.role !== 'ADMIN')
     return NextResponse.json({ error: 'Only admins can delete teachers' }, { status: 403 })
 

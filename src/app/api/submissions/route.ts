@@ -78,7 +78,6 @@ export async function POST(req: NextRequest) {
       contestPointValue = contest.problems[0].pointOverride ?? problem.points
     }
 
-    // Create pending submission
     const submission = await prisma.submission.create({
       data: {
         code,
@@ -90,7 +89,6 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // Run judge (async in production, inline here for simplicity)
     const result = await judgeSubmission(
       code,
       language,
@@ -112,7 +110,6 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // Check if this is the first accepted submission for points
     let pointsAwarded = 0
     let aiComplexityBonusAwarded = 0
     let contestPointsAwarded = 0
@@ -195,7 +192,6 @@ export async function POST(req: NextRequest) {
       contestAiComplexityBonusAwarded = 0
     }
 
-    // Update submission with results
     const updated = await prisma.submission.update({
       where: { id: submission.id },
       data: {
@@ -253,7 +249,6 @@ export async function GET(req: NextRequest) {
   const contestId = searchParams.get('contestId')
   const userId = searchParams.get('userId') || session.user.id
 
-  // Non-admins can only see their own submissions
   const targetUserId = ['ADMIN', 'TEACHER'].includes(session.user.role) ? userId : session.user.id
 
   const submissions = await prisma.submission.findMany({

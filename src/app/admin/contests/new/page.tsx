@@ -11,6 +11,11 @@ interface Problem {
   points: number;
 }
 
+function toIsoFromLocalDateTime(value: string) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "" : date.toISOString();
+}
+
 export default function CreateContestPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -61,12 +66,28 @@ export default function CreateContestPage() {
     }
     setLoading(true);
     setError("");
+    const startsAt = toIsoFromLocalDateTime(form.startsAt);
+    const endsAt = toIsoFromLocalDateTime(form.endsAt);
+
+    if (!startsAt || !endsAt) {
+      setError("Choose valid start and end times");
+      setLoading(false);
+      return;
+    }
+
+    if (new Date(endsAt).getTime() <= new Date(startsAt).getTime()) {
+      setError("End time must be after start time");
+      setLoading(false);
+      return;
+    }
 
     const res = await fetch("/api/contests", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...form,
+        startsAt,
+        endsAt,
         problemIds: selectedProblems.map((p) => p.id),
       }),
     });
@@ -108,7 +129,6 @@ export default function CreateContestPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Basic info */}
             <div className="glass rounded-2xl p-6">
               {sectionTitle("Contest Details")}
               <div className="space-y-4">
@@ -248,11 +268,9 @@ export default function CreateContestPage() {
               </div>
             </div>
 
-            {/* Problems */}
             <div className="glass rounded-2xl p-6">
               {sectionTitle("Problems")}
 
-              {/* Selected problems */}
               {selectedProblems.length > 0 && (
                 <div className="mb-4 space-y-2">
                   <p
@@ -324,7 +342,6 @@ export default function CreateContestPage() {
                 </div>
               )}
 
-              {/* Search */}
               <div className="relative mb-3">
                 <Search
                   size={14}

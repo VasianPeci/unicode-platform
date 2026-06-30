@@ -10,7 +10,6 @@ export default withAuth(
       return NextResponse.redirect(new URL('/admin', req.url))
     }
 
-    // Admin-only routes
     if (pathname.startsWith('/admin') && token?.role !== 'ADMIN' && token?.role !== 'TEACHER') {
       return NextResponse.redirect(new URL('/dashboard', req.url))
     }
@@ -19,7 +18,6 @@ export default withAuth(
       return NextResponse.redirect(new URL(token?.role === 'ADMIN' ? '/admin' : '/dashboard', req.url))
     }
 
-    // Strict admin-only
     if ((pathname === '/admin' || pathname.startsWith('/admin/teachers') || pathname.startsWith('/admin/students')) && token?.role !== 'ADMIN') {
       return NextResponse.redirect(new URL('/dashboard', req.url))
     }
@@ -40,6 +38,7 @@ export const config = {
     '/submissions/:path*',
     '/contests/:path*',
     '/leaderboard/:path*',
+    '/assistant/:path*',
     '/admin/:path*',
     '/settings/:path*',
   ],

@@ -28,7 +28,6 @@ export async function POST(
     return NextResponse.json({ error: 'Contest has already ended' }, { status: 400 })
   }
 
-  // Upsert so double-joining is safe
   await prisma.contestParticipant.upsert({
     where: { contestId_userId: { contestId: params.id, userId: session.user.id } },
     create: { contestId: params.id, userId: session.user.id },

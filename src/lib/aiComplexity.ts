@@ -1,3 +1,11 @@
+import {
+  callOpenRouterChat,
+  DEFAULT_OPENROUTER_MODEL,
+  numberFromEnv,
+  OpenRouterConfigurationError,
+  OpenRouterRequestError,
+} from '@/lib/openRouter'
+
 type ComplexityReviewStatus = 'REVIEWED' | 'UNAVAILABLE' | 'FAILED'
 
 export interface AiComplexityReview {
@@ -23,19 +31,10 @@ interface AiComplexityInput {
   }
 }
 
-const DEFAULT_MODEL = 'openrouter/free'
 const DEFAULT_TIMEOUT_MS = 15000
 const DEFAULT_MAX_BONUS = 5
 const DEFAULT_CODE_LIMIT = 12000
 const DEFAULT_DESCRIPTION_LIMIT = 5000
-
-function numberFromEnv(name: string, fallback: number) {
-  const raw = process.env[name]
-  if (!raw) return fallback
-
-  const parsed = Number(raw)
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback
-}
 
 export function getAiComplexityMaxBonus() {
   return numberFromEnv('AI_COMPLEXITY_MAX_BONUS', DEFAULT_MAX_BONUS)
@@ -147,55 +146,24 @@ ${truncate(input.code, codeLimit)}
 }
 
 export async function judgeComplexityWithAi(input: AiComplexityInput): Promise<AiComplexityReview> {
-  const apiKey = process.env.OPENROUTER_API_KEY
-  const model = process.env.OPENROUTER_MODEL || DEFAULT_MODEL
-
-  if (!apiKey) {
-    return unavailable(
-      'AI complexity review is not configured. Add OPENROUTER_API_KEY to enable the free OpenRouter complexity judge.',
-    )
-  }
-
+  const model = process.env.OPENROUTER_MODEL || DEFAULT_OPENROUTER_MODEL
   const timeoutMs = numberFromEnv('AI_COMPLEXITY_TIMEOUT_MS', DEFAULT_TIMEOUT_MS)
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), timeoutMs)
 
   try {
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': process.env.OPENROUTER_HTTP_REFERER || process.env.NEXTAUTH_URL || 'http://localhost:3000',
-        'X-OpenRouter-Title': process.env.OPENROUTER_APP_TITLE || 'UniCode Platform',
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a strict algorithmic complexity judge for programming assignments. Respond with valid JSON only.',
-          },
-          { role: 'user', content: buildPrompt(input) },
-        ],
-        temperature: 0.1,
-        max_tokens: 450,
-      }),
-      signal: controller.signal,
+    const review = await callOpenRouterChat({
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a strict algorithmic complexity judge for programming assignments. Respond with valid JSON only.',
+        },
+        { role: 'user', content: buildPrompt(input) },
+      ],
+      temperature: 0.1,
+      maxTokens: 450,
+      timeoutMs,
     })
 
-    const body = await response.text()
-    if (!response.ok) {
-      return failed(`AI complexity review failed with HTTP ${response.status}. No complexity bonus was awarded.`, model)
-    }
-
-    const data = body ? JSON.parse(body) : {}
-    const content = data.choices?.[0]?.message?.content
-    if (typeof content !== 'string' || !content.trim()) {
-      return failed('AI complexity review returned an empty response. No complexity bonus was awarded.', data.model || model)
-    }
-
-    const parsed = extractJson(content)
+    const parsed = extractJson(review.content)
     const score = clampScore(parsed.score)
     const feedback = typeof parsed.feedback === 'string' && parsed.feedback.trim()
       ? parsed.feedback.trim()
@@ -208,9 +176,19 @@ export async function judgeComplexityWithAi(input: AiComplexityInput): Promise<A
       score,
       bonusPoints: calculateBonus(score),
       feedback,
-      model: data.model || model,
+      model: review.model,
     }
   } catch (error: any) {
+    if (error instanceof OpenRouterConfigurationError) {
+      return unavailable(
+        'AI complexity review is not configured. Add OPENROUTER_API_KEY to enable the free OpenRouter complexity judge.',
+      )
+    }
+
+    if (error instanceof OpenRouterRequestError) {
+      return failed(`AI complexity review failed with HTTP ${error.status}. No complexity bonus was awarded.`, model)
+    }
+
     const timedOut = error?.name === 'AbortError'
     return failed(
       timedOut
@@ -218,7 +196,5 @@ export async function judgeComplexityWithAi(input: AiComplexityInput): Promise<A
         : 'AI complexity review could not be completed. No complexity bonus was awarded.',
       model,
     )
-  } finally {
-    clearTimeout(timeout)
   }
 }

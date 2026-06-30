@@ -21,7 +21,6 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
   if (!problem) return NextResponse.json({ error: 'Problem not found' }, { status: 404 })
 
-  // Check if user solved it
   const solved = await prisma.submission.findFirst({
     where: { problemId: problem.id, userId: session.user.id, status: 'ACCEPTED' },
     select: { id: true },
@@ -36,7 +35,6 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     }),
   ])
 
-  // Filter hidden test cases for students
   const testCases = (problem.testCases as any[]).map((tc, i) => ({
     ...tc,
     input: tc.isHidden ? undefined : tc.input,

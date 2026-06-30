@@ -145,10 +145,8 @@ export default function ProblemPage() {
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen lg:h-screen overflow-y-auto lg:overflow-hidden">
-      {/* Left panel - Problem description */}
       <div className="w-full lg:w-[45%] border-b lg:border-b-0 lg:border-r overflow-visible lg:overflow-y-auto flex flex-col"
         style={{ borderColor: 'var(--border)' }}>
-        {/* Header */}
         <div className="px-4 sm:px-6 py-5 sticky top-0 z-10" style={{ background: 'var(--bg-base)', borderBottom: '1px solid var(--border)' }}>
           {contestId && (
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -216,7 +214,6 @@ export default function ProblemPage() {
           </div>
           <h1 className="text-xl font-bold">{problem.title}</h1>
 
-          {/* Tags */}
           {problem.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-3">
               {problem.tags.map(tag => (
@@ -228,7 +225,6 @@ export default function ProblemPage() {
             </div>
           )}
 
-          {/* Tabs */}
           <div className="flex gap-4 mt-4">
             {(['description', 'submissions'] as const).map(tab => (
               <button key={tab} onClick={() => setActiveTab(tab)}
@@ -250,7 +246,6 @@ export default function ProblemPage() {
         <div className="flex-1 px-4 sm:px-6 py-5">
           {activeTab === 'description' ? (
             <div className="space-y-6">
-              {/* Description */}
               <div className="prose-dark text-sm leading-relaxed"
                 dangerouslySetInnerHTML={{ __html: problem.description
                   .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -259,7 +254,6 @@ export default function ProblemPage() {
                   .replace(/\n/g, '<br/>')
                 }} />
 
-              {/* Examples */}
               {problem.examples && (problem.examples as any[]).length > 0 && (
                 <div>
                   <h3 className="text-sm font-semibold mb-3">Examples</h3>
@@ -285,7 +279,6 @@ export default function ProblemPage() {
                 </div>
               )}
 
-              {/* Constraints */}
               {problem.constraints && (
                 <div>
                   <h3 className="text-sm font-semibold mb-2">Constraints</h3>
@@ -296,7 +289,6 @@ export default function ProblemPage() {
                 </div>
               )}
 
-              {/* Hints */}
               {problem.hints && (problem.hints as string[]).length > 0 && (
                 <div>
                   <button onClick={() => setShowHints(h => !h)}
@@ -326,9 +318,7 @@ export default function ProblemPage() {
         </div>
       </div>
 
-      {/* Right panel - Editor */}
       <div className="flex-1 flex flex-col overflow-hidden min-h-[560px] lg:min-h-0">
-        {/* Editor toolbar */}
         <div className="flex flex-wrap items-center gap-3 px-4 py-3 flex-shrink-0"
           style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface)' }}>
           <select
@@ -367,7 +357,6 @@ export default function ProblemPage() {
           </button>
         </div>
 
-        {/* Monaco */}
         <div className="flex-1 overflow-hidden">
           <MonacoEditor
             height="100%"
@@ -391,7 +380,6 @@ export default function ProblemPage() {
           />
         </div>
 
-        {/* Result panel */}
         {result && (
           <div className="flex-shrink-0 border-t overflow-y-auto max-h-80"
             style={{ borderColor: 'var(--border)', background: 'var(--bg-surface)' }}>

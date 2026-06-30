@@ -80,13 +80,11 @@ export default function ProblemsPage() {
 
   return (
     <div className="p-4 pt-20 sm:p-6 md:p-8 md:pt-8 max-w-5xl mx-auto">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Problems</h1>
         <p style={{ color: 'var(--text-secondary)' }}>{formatCount(total, 'problem')} available</p>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
@@ -126,9 +124,7 @@ export default function ProblemsPage() {
         </div>
       </div>
 
-      {/* Table */}
       <div className="glass rounded-2xl overflow-hidden">
-        {/* Table header */}
         <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 text-xs font-medium"
           style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>
           <div className="col-span-1">#</div>
@@ -156,7 +152,6 @@ export default function ProblemsPage() {
                   onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-elevated)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                 >
-                  {/* Status */}
                   <div className="hidden md:block md:col-span-1">
                     {p.isSolved
                       ? <CheckCircle2 size={16} style={{ color: 'var(--success)' }} />
@@ -164,7 +159,6 @@ export default function ProblemsPage() {
                     }
                   </div>
 
-                  {/* Title */}
                   <div className="md:col-span-4 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="md:hidden flex-shrink-0">
@@ -189,7 +183,6 @@ export default function ProblemsPage() {
                     )}
                   </div>
 
-                  {/* Difficulty */}
                   <div className="md:col-span-2 flex items-center justify-between md:block">
                     <span className="md:hidden text-xs" style={{ color: 'var(--text-muted)' }}>Difficulty</span>
                     <span className="text-xs font-medium px-2 py-1 rounded-md"
@@ -198,7 +191,6 @@ export default function ProblemsPage() {
                     </span>
                   </div>
 
-                  {/* Acceptance */}
                   <div className="md:col-span-2 flex items-center justify-between md:block">
                     <span className="md:hidden text-xs" style={{ color: 'var(--text-muted)' }}>Acceptance</span>
                     <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
@@ -206,7 +198,6 @@ export default function ProblemsPage() {
                     </span>
                   </div>
 
-                  {/* Tags */}
                   <div className="md:col-span-2 flex items-center justify-between md:justify-start gap-2">
                     <span className="md:hidden text-xs" style={{ color: 'var(--text-muted)' }}>Tags</span>
                     <div className="flex items-center gap-2 overflow-hidden">

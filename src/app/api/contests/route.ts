@@ -49,9 +49,19 @@ export async function POST(req: NextRequest) {
   try {
     const { title, description, startsAt, endsAt, isPublic, problemIds, rules } = await req.json()
     const ids = Array.isArray(problemIds) ? problemIds : []
+    const startDate = new Date(startsAt)
+    const endDate = new Date(endsAt)
 
     if (ids.length === 0) {
       return NextResponse.json({ error: 'Add at least one problem' }, { status: 400 })
+    }
+
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+      return NextResponse.json({ error: 'Choose valid start and end times' }, { status: 400 })
+    }
+
+    if (endDate.getTime() <= startDate.getTime()) {
+      return NextResponse.json({ error: 'End time must be after start time' }, { status: 400 })
     }
 
     const allowedProblemCount = await prisma.problem.count({
@@ -70,8 +80,8 @@ export async function POST(req: NextRequest) {
       data: {
         title,
         description,
-        startsAt: new Date(startsAt),
-        endsAt: new Date(endsAt),
+        startsAt: startDate,
+        endsAt: endDate,
         isPublic: isPublic ?? true,
         rules,
         createdById: session.user.id,

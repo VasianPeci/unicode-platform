@@ -177,7 +177,7 @@ prisma/
 
 ### Phase 4
 - [ ] Multiple universities / multi-tenant
-- [ ] AI-powered hints (Claude API integration)
+- [ ] Contextual hints
 - [ ] Code plagiarism detection
 - [ ] Mobile-responsive layout
 

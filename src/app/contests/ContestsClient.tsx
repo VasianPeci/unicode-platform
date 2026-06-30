@@ -57,7 +57,6 @@ export default function ContestsClient({ session, contests }: Props) {
       <main className="flex-1 app-shell-main overflow-y-auto p-4 pt-20 sm:p-6 md:p-8 md:pt-8">
         <div className="max-w-4xl mx-auto">
 
-          {/* HEADER */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <div>
               <h1 className="text-3xl font-bold mb-1 flex items-center gap-3">
@@ -80,7 +79,6 @@ export default function ContestsClient({ session, contests }: Props) {
             )}
           </div>
 
-          {/* LIST */}
           <div className="space-y-4">
             {items.length === 0 && (
               <div className="glass rounded-2xl p-12 text-center">
@@ -109,7 +107,6 @@ export default function ContestsClient({ session, contests }: Props) {
                         </span>
                       )}
 
-                      {/* STATUS */}
                       <div className="flex flex-wrap items-center gap-3 mb-2">
                         <span
                           className="text-xs font-medium px-2 py-0.5 rounded-full"
@@ -127,7 +124,6 @@ export default function ContestsClient({ session, contests }: Props) {
                         </span>
                       </div>
 
-                      {/* TITLE */}
                       <h2 className="text-lg font-semibold mb-1">
                         <Link href={`/contests/${contest.id}`} style={{ color: 'var(--text-primary)', textDecoration: 'none' }}>
                           {contest.title}
@@ -143,14 +139,12 @@ export default function ContestsClient({ session, contests }: Props) {
                         Created by {contest.createdBy?.name}
                       </p>
 
-                      {/* DESCRIPTION */}
                       {contest.description && (
                         <p className="text-sm mb-3 text-muted">
                           {contest.description}
                         </p>
                       )}
 
-                      {/* META */}
                       <div className="flex flex-wrap gap-3 sm:gap-4 text-xs text-muted">
                         <span className="flex items-center gap-1">
                           <Trophy size={12} />
