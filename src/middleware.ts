@@ -38,7 +38,6 @@ export const config = {
     '/submissions/:path*',
     '/contests/:path*',
     '/leaderboard/:path*',
-    '/assistant/:path*',
     '/admin/:path*',
     '/settings/:path*',
   ],
