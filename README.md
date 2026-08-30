@@ -64,10 +64,9 @@ Open [http://localhost:3000](http://localhost:3000).
 
 | Role | Email | Password |
 |------|-------|----------|
-| Admin | admin@university.edu | admin123 |
-| Teacher | teacher@university.edu | teacher123 |
-| Student | alice@university.edu | student123 |
-| Student | bob@university.edu | student123 |
+| Admin | admin@fti.edu.al | admin123 |
+| Teacher | teacher@fti.edu.al | teacher123 |
+| Student | ana@fti.edu.al | student123 |
 
 ---
 

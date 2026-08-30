@@ -1,0 +1,131 @@
+<mxfile host="app.diagrams.net" agent="Codex">
+  <diagram id="unicode-use-case" name="Use Case - UniCode">
+    <mxGraphModel dx="1717" dy="878" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="system" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=2;strokeColor=#6D5DFB;strokeWidth=2;fillColor=#FFFFFF;" value="" vertex="1">
+          <mxGeometry height="1000" width="1080" x="260" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="system-label" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#5B4CF0;" value="Platforma UniCode" vertex="1">
+          <mxGeometry height="35" width="300" x="650" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="student" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontSize=18;fontStyle=1;strokeColor=#172033;fontColor=#172033;" value="Student" vertex="1">
+          <mxGeometry height="150" width="90" x="70" y="535" as="geometry" />
+        </mxCell>
+        <mxCell id="teacher" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontSize=18;fontStyle=1;strokeColor=#172033;fontColor=#172033;" value="Pedagog" vertex="1">
+          <mxGeometry height="150" width="90" x="1430" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="login" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;strokeColor=#6D5DFB;strokeWidth=2;fillColor=#F5F3FF;fontSize=16;fontColor=#172033;" value="Identifikohet në sistem" vertex="1">
+          <mxGeometry height="90" width="290" x="655" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="student-label" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=16;fontStyle=1;fontColor=#64748B;" value="Funksionet e studentit" vertex="1">
+          <mxGeometry height="30" width="300" x="325" y="295" as="geometry" />
+        </mxCell>
+        <mxCell id="s-view-problems" parent="1" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#6D5DFB;strokeWidth=2;fillColor=#FFFFFF;fontSize=16;fontColor=#172033;" value="Zgjidh probleme" vertex="1">
+          <mxGeometry height="70" width="300" x="325" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="s-solve" parent="1" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#6D5DFB;strokeWidth=2;fillColor=#FFFFFF;fontSize=16;fontColor=#172033;" value="Shikon dorëzimet e kaluar" vertex="1">
+          <mxGeometry height="70" width="300" x="325" y="435" as="geometry" />
+        </mxCell>
+        <mxCell id="s-result" parent="1" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#6D5DFB;strokeWidth=2;fillColor=#FFFFFF;fontSize=16;fontColor=#172033;" value="Merr rezultat dhe pikë" vertex="1">
+          <mxGeometry height="70" width="300" x="330" y="530" as="geometry" />
+        </mxCell>
+        <mxCell id="s-contest" parent="1" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#6D5DFB;strokeWidth=2;fillColor=#FFFFFF;fontSize=16;fontColor=#172033;" value="Merr pjesë në konkurs" vertex="1">
+          <mxGeometry height="70" width="300" x="330" y="625" as="geometry" />
+        </mxCell>
+        <mxCell id="s-ranking" parent="1" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#6D5DFB;strokeWidth=2;fillColor=#FFFFFF;fontSize=16;fontColor=#172033;" value="Shikon renditjen" vertex="1">
+          <mxGeometry height="70" width="300" x="330" y="720" as="geometry" />
+        </mxCell>
+        <mxCell id="s-chatbot" parent="1" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#6D5DFB;strokeWidth=2;fillColor=#FFFFFF;fontSize=16;fontColor=#172033;" value="Përdor chatbot-in si student" vertex="1">
+          <mxGeometry height="70" width="300" x="330" y="815" as="geometry" />
+        </mxCell>
+        <mxCell id="teacher-label" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=16;fontStyle=1;fontColor=#64748B;" value="Funksionet e pedagogut" vertex="1">
+          <mxGeometry height="30" width="300" x="950" y="285" as="geometry" />
+        </mxCell>
+        <mxCell id="t-create-problem" parent="1" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#6D5DFB;strokeWidth=2;fillColor=#FFFFFF;fontSize=16;fontColor=#172033;" value="Krijon problem" vertex="1">
+          <mxGeometry height="70" width="300" x="950" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="t-publish-problem" parent="1" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#6D5DFB;strokeWidth=2;fillColor=#FFFFFF;fontSize=16;fontColor=#172033;" value="Zgjidh problem pa marrë pikë" vertex="1">
+          <mxGeometry height="70" width="300" x="950" y="425" as="geometry" />
+        </mxCell>
+        <mxCell id="t-create-contest" parent="1" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#6D5DFB;strokeWidth=2;fillColor=#FFFFFF;fontSize=16;fontColor=#172033;" value="Krijon konkurs" vertex="1">
+          <mxGeometry height="70" width="300" x="950" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="t-manage-own" parent="1" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#6D5DFB;strokeWidth=2;fillColor=#FFFFFF;fontSize=16;fontColor=#172033;" value="Menaxhon përmbajtjen e vet" vertex="1">
+          <mxGeometry height="70" width="300" x="950" y="615" as="geometry" />
+        </mxCell>
+        <mxCell id="t-view-submissions" parent="1" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#6D5DFB;strokeWidth=2;fillColor=#FFFFFF;fontSize=16;fontColor=#172033;" value="Përdor chatbot-in si pedagog" vertex="1">
+          <mxGeometry height="70" width="300" x="950" y="710" as="geometry" />
+        </mxCell>
+        <mxCell id="admin-label" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=16;fontStyle=1;fontColor=#64748B;" value="Funksionet e administratorit" vertex="1">
+          <mxGeometry height="30" width="300" x="850" y="840" as="geometry" />
+        </mxCell>
+        <mxCell id="a-panel" parent="1" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#6D5DFB;strokeWidth=2;fillColor=#FFFFFF;fontSize=16;fontColor=#172033;" value="Panel administrimi me statistika" vertex="1">
+          <mxGeometry height="70" width="300" x="700" y="885" as="geometry" />
+        </mxCell>
+        <mxCell id="a-approve" parent="1" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#6D5DFB;strokeWidth=2;fillColor=#FFFFFF;fontSize=16;fontColor=#172033;" value="Miraton përdorues" vertex="1">
+          <mxGeometry height="70" width="300" x="700" y="980" as="geometry" />
+        </mxCell>
+        <mxCell id="a-manage-users" parent="1" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#6D5DFB;strokeWidth=2;fillColor=#FFFFFF;fontSize=16;fontColor=#172033;" value="Menaxhon përdorues" vertex="1">
+          <mxGeometry height="70" width="280" x="1020" y="885" as="geometry" />
+        </mxCell>
+        <mxCell id="a-delete-content" parent="1" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#6D5DFB;strokeWidth=2;fillColor=#FFFFFF;fontSize=16;fontColor=#172033;" value="Fshin përmbajtje" vertex="1">
+          <mxGeometry height="70" width="280" x="1020" y="980" as="geometry" />
+        </mxCell>
+        <mxCell id="e-student-login" edge="1" parent="1" source="student" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;strokeColor=#64748B;strokeWidth=1.5;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;exitPerimeter=0;" target="login">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="115" y="530" />
+              <mxPoint x="120" y="530" />
+              <mxPoint x="120" y="206" />
+              <mxPoint x="655" y="206" />
+            </Array>
+            <mxPoint x="140" y="530" as="sourcePoint" />
+            <mxPoint x="627.9251525284727" y="169.99902241751792" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-t-view-submissions" edge="1" parent="1" source="teacher" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;strokeColor=#64748B;strokeWidth=1.5;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;exitPerimeter=0;" target="login">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1475" y="215" />
+            </Array>
+            <mxPoint x="1410" y="70" as="sourcePoint" />
+            <mxPoint x="1080" y="395" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eqmX5Uh8cJYXyEw-Ebde-17" edge="1" parent="1" source="eqmX5Uh8cJYXyEw-Ebde-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="eqmX5Uh8cJYXyEw-Ebde-16">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eqmX5Uh8cJYXyEw-Ebde-1" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontSize=18;fontStyle=1;strokeColor=#172033;fontColor=#172033;" value="Admin" vertex="1">
+          <mxGeometry height="150" width="90" x="1420" y="760" as="geometry" />
+        </mxCell>
+        <mxCell id="eqmX5Uh8cJYXyEw-Ebde-5" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" target="eqmX5Uh8cJYXyEw-Ebde-1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="800" y="820" />
+              <mxPoint x="1465" y="820" />
+            </Array>
+            <mxPoint x="800" y="260" as="sourcePoint" />
+            <mxPoint x="1390" y="810" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eqmX5Uh8cJYXyEw-Ebde-8" parent="1" style="swimlane;startSize=0;strokeColor=#6D5DFB;" value="" vertex="1">
+          <mxGeometry height="620" width="360" x="295" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="eqmX5Uh8cJYXyEw-Ebde-10" parent="1" style="swimlane;startSize=0;strokeColor=#6D5DFB;" value="" vertex="1">
+          <mxGeometry height="520" width="380" x="900" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="eqmX5Uh8cJYXyEw-Ebde-14" edge="1" parent="1" source="teacher" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.997;entryY=0.202;entryDx=0;entryDy=0;entryPerimeter=0;" target="eqmX5Uh8cJYXyEw-Ebde-10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eqmX5Uh8cJYXyEw-Ebde-15" edge="1" parent="1" source="student" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=-0.011;entryY=0.533;entryDx=0;entryDy=0;entryPerimeter=0;" target="eqmX5Uh8cJYXyEw-Ebde-8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eqmX5Uh8cJYXyEw-Ebde-16" parent="1" style="swimlane;startSize=0;strokeColor=#6D5DFB;" value="" vertex="1">
+          <mxGeometry height="250" width="620" x="690" y="840" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

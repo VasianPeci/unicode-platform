@@ -14,6 +14,7 @@ export default function StudentsClient({ session, students: initial }: Props) {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [approvingId, setApprovingId] = useState<string | null>(null)
+  const [error, setError] = useState('')
 
   const pendingCount = students.filter(s => s.emailVerifiedAt && !s.isActive).length
 
@@ -44,14 +45,20 @@ export default function StudentsClient({ session, students: initial }: Props) {
 
   async function handleDelete(id: string) {
     setDeletingId(id)
+    setError('')
+    let deleted = false
     try {
       const res = await fetch(`/api/users/${id}`, { method: 'DELETE' })
+      const data = await res.json().catch(() => ({}))
       if (res.ok) {
+        deleted = true
         setStudents(prev => prev.filter(s => s.id !== id))
+      } else {
+        setError(data.error || 'Failed to delete student')
       }
     } finally {
       setDeletingId(null)
-      setConfirmId(null)
+      if (deleted) setConfirmId(null)
     }
   }
 
@@ -70,6 +77,14 @@ export default function StudentsClient({ session, students: initial }: Props) {
       </div>
 
       <div className="glass rounded-2xl overflow-hidden">
+        {error && (
+          <div
+            className="px-6 py-3 text-sm"
+            style={{ background: 'rgba(248,113,113,0.1)', color: 'var(--danger)', borderBottom: '1px solid rgba(248,113,113,0.2)' }}
+          >
+            {error}
+          </div>
+        )}
 
         <div
           className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 text-xs font-medium"

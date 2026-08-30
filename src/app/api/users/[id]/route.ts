@@ -66,32 +66,48 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const session = await getServerSession(authOptions)
+  try {
+    const session = await getServerSession(authOptions)
 
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (!['ADMIN', 'TEACHER'].includes(session.user.role))
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!['ADMIN', 'TEACHER'].includes(session.user.role))
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const { id } = params
+    const { id } = params
 
-  const target = await prisma.user.findUnique({
-    where: { id },
-    select: { universityId: true, role: true },
-  })
+    if (id === session.user.id) {
+      return NextResponse.json({ error: 'You cannot delete your own account here' }, { status: 400 })
+    }
 
-  if (!target)
-    return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    const target = await prisma.user.findUnique({
+      where: { id },
+      select: { universityId: true, role: true },
+    })
 
-  if (target.universityId !== session.user.universityId)
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    if (!target)
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-  if (target.role === 'TEACHER' && session.user.role !== 'ADMIN')
-    return NextResponse.json({ error: 'Only admins can delete teachers' }, { status: 403 })
+    if (target.universityId !== session.user.universityId)
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  if (!['STUDENT', 'TEACHER'].includes(target.role))
-    return NextResponse.json({ error: 'Cannot delete this user' }, { status: 400 })
+    if (target.role === 'TEACHER' && session.user.role !== 'ADMIN')
+      return NextResponse.json({ error: 'Only admins can delete teachers' }, { status: 403 })
 
-  await prisma.user.delete({ where: { id } })
+    if (!['STUDENT', 'TEACHER'].includes(target.role))
+      return NextResponse.json({ error: 'Cannot delete this user' }, { status: 400 })
 
-  return NextResponse.json({ success: true })
+    await prisma.$transaction(async tx => {
+      if (target.role === 'STUDENT') {
+        await tx.submission.deleteMany({ where: { userId: id } })
+        await tx.contestParticipant.deleteMany({ where: { userId: id } })
+      }
+
+      await tx.user.delete({ where: { id } })
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('[User Delete Error]', error)
+    return NextResponse.json({ error: 'Failed to delete user' }, { status: 500 })
+  }
 }

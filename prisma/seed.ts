@@ -47,12 +47,18 @@ async function main() {
   const adminHash = await bcrypt.hash("admin123", 12);
   const admin = await prisma.user.upsert({
     where: { email: "admin@fti.edu.al" },
-    update: {},
+    update: {
+      passwordHash: adminHash,
+      isActive: true,
+      emailVerifiedAt: new Date(),
+    },
     create: {
       email: "admin@fti.edu.al",
       name: "System Admin",
       passwordHash: adminHash,
       role: Role.ADMIN,
+      isActive: true,
+      emailVerifiedAt: new Date(),
       universityId: university.id,
     },
   });
@@ -60,39 +66,57 @@ async function main() {
   const teacherHash = await bcrypt.hash("teacher123", 12);
   const teacher = await prisma.user.upsert({
     where: { email: "teacher@fti.edu.al" },
-    update: {},
+    update: {
+      passwordHash: teacherHash,
+      isActive: true,
+      emailVerifiedAt: new Date(),
+    },
     create: {
       email: "teacher@fti.edu.al",
       name: "Prof. Smith",
       passwordHash: teacherHash,
       role: Role.TEACHER,
+      isActive: true,
+      emailVerifiedAt: new Date(),
       universityId: university.id,
     },
   });
 
   const studentHash = await bcrypt.hash("student123", 12);
   await prisma.user.upsert({
-    where: { email: "alice@fti.edu.al" },
-    update: {},
+    where: { email: "ana@fti.edu.al" },
+    update: {
+      passwordHash: studentHash,
+      isActive: true,
+      emailVerifiedAt: new Date(),
+    },
     create: {
-      email: "alice@fti.edu.al",
-      name: "Alice Johnson",
+      email: "ana@fti.edu.al",
+      name: "Ana Johnson",
       passwordHash: studentHash,
       role: Role.STUDENT,
       totalPoints: 350,
+      isActive: true,
+      emailVerifiedAt: new Date(),
       universityId: university.id,
     },
   });
 
   await prisma.user.upsert({
     where: { email: "bob@fti.edu.al" },
-    update: {},
+    update: {
+      passwordHash: studentHash,
+      isActive: true,
+      emailVerifiedAt: new Date(),
+    },
     create: {
       email: "bob@fti.edu.al",
       name: "Bob Chen",
       passwordHash: studentHash,
       role: Role.STUDENT,
       totalPoints: 200,
+      isActive: true,
+      emailVerifiedAt: new Date(),
       universityId: university.id,
     },
   });

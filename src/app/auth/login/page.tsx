@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, CheckCircle2, Eye, EyeOff, Code2, KeyRound, Loader2 } from 'lucide-react'
 
+const SHOW_DEMO_ACCOUNTS = true
+
 export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
@@ -239,7 +241,7 @@ export default function LoginPage() {
         </div>
 
         <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
-          {authMode === 'reset' ? 'Reset password' : 'Welcome back'}
+          {authMode === 'reset' ? 'Reset password' : 'Welcome'}
         </h1>
         <p className="mb-8" style={{ color: 'var(--text-secondary)' }}>
           {authMode === 'reset'
@@ -547,28 +549,30 @@ export default function LoginPage() {
               </form>
             )}
 
-            <div className="mt-6 p-4 rounded-xl" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
-              <p className="text-xs font-medium mb-3" style={{ color: 'var(--text-muted)' }}>DEMO ACCOUNTS</p>
-              <div className="space-y-2">
-                {[
-                  { label: 'Admin', email: 'admin@fti.edu.al', pass: 'admin123' },
-                  { label: 'Teacher', email: 'teacher@fti.edu.al', pass: 'teacher123' },
-                  { label: 'Student', email: 'alice@fti.edu.al', pass: 'student123' },
-                ].map(({ label, email: e, pass }) => (
-                  <button
-                    key={label}
-                    onClick={() => { setEmail(e); setPassword(pass); setUnverifiedEmail(''); setError(''); setNotice('') }}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs transition-all"
-                    style={{ background: 'var(--bg-highlight)', color: 'var(--text-secondary)', border: 'none', cursor: 'pointer' }}
-                    onMouseEnter={el => (el.target as HTMLElement).style.color = 'var(--text-primary)'}
-                    onMouseLeave={el => (el.target as HTMLElement).style.color = 'var(--text-secondary)'}
-                  >
-                    <span className="font-medium" style={{ color: 'var(--accent)' }}>{label}</span>
-                    <span>{e}</span>
-                  </button>
-                ))}
+            {SHOW_DEMO_ACCOUNTS && (
+              <div className="mt-6 p-4 rounded-xl" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+                <p className="text-xs font-medium mb-3" style={{ color: 'var(--text-muted)' }}>DEMO ACCOUNTS</p>
+                <div className="space-y-2">
+                  {[
+                    { label: 'Admin', email: 'admin@fti.edu.al', pass: 'admin123' },
+                    { label: 'Teacher', email: 'teacher@fti.edu.al', pass: 'teacher123' },
+                    { label: 'Student', email: 'ana@fti.edu.al', pass: 'student123' },
+                  ].map(({ label, email: e, pass }) => (
+                    <button
+                      key={label}
+                      onClick={() => { setEmail(e); setPassword(pass); setUnverifiedEmail(''); setError(''); setNotice('') }}
+                      className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs transition-all"
+                      style={{ background: 'var(--bg-highlight)', color: 'var(--text-secondary)', border: 'none', cursor: 'pointer' }}
+                      onMouseEnter={el => (el.target as HTMLElement).style.color = 'var(--text-primary)'}
+                      onMouseLeave={el => (el.target as HTMLElement).style.color = 'var(--text-secondary)'}
+                    >
+                      <span className="font-medium" style={{ color: 'var(--accent)' }}>{label}</span>
+                      <span>{e}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             <p className="text-center mt-6 text-sm" style={{ color: 'var(--text-muted)' }}>
               Don&apos;t have an account?{' '}
